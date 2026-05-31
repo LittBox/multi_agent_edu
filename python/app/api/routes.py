@@ -5,24 +5,7 @@ from pydantic import BaseModel
 
 router = APIRouter(tags=["education"])
 
-
-class SubmitAnswerRequest(BaseModel):
-    learner_id: str
-    knowledge_id: str
-    is_correct: bool
-    time_spent_seconds: float = 0
-
-
-class AskQuestionRequest(BaseModel):
-    learner_id: str
-    knowledge_id: str
-    question: str
-
-
-class SendMessageRequest(BaseModel):
-    learner_id: str
-    message: str
-    knowledge_id: str = "general"
+from app.schemas.learning import SubmitAnswerRequest, AskQuestionRequest, SendMessageRequest
 
 
 @router.get("/health")

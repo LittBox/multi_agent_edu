@@ -1,1 +1,0 @@
-"""Learner state schema placeholder."""
