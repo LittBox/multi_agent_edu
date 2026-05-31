@@ -1,0 +1,12 @@
+.vscode
+frontend/node_modules
+python/.env
+python/.venv
+python/tests
+.pytest_cache
+.DS_Store
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db

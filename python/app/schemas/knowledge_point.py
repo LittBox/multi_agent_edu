@@ -1,0 +1,1 @@
+"""Knowledge point schema placeholder."""
