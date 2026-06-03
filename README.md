@@ -26,7 +26,10 @@ cp ../.env.example ../.env
 # 编辑 .env 填入 API Key
 
 # 4. 启动
-python -m api.main
+```bash
+python -m app.main  
+uvicorn app.main:app --reload #开发调试
+```
 
 # 5. 查看 API 文档
 # 浏览器打开 http://localhost:8000/docs

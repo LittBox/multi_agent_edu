@@ -1,7 +1,4 @@
-
-
 from fastapi import Depends, Request
-
 from app.api.routes import SubmitAnswerRequest
 from app.db.database import get_db
 from app.services.learning_service import LearningService

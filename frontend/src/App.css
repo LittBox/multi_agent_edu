@@ -1,0 +1,18 @@
+
+.Container{
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #8ff1b4;
+}
+
+.App-header{
+    background-color: #ecb8da;
+    min-height: 20vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+}

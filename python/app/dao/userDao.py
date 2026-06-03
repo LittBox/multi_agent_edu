@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.security import hash_password, verify_password
 from app.db.models.user import User
 
 
@@ -12,10 +12,10 @@ class UserDAO:
         username: str,
         pwd: str
     ) -> User:
-
+        print("pwd:", pwd)
         user = User(
             username=username,
-            pwd=pwd
+            pwd=hash_password(pwd)
         )
 
         db.add(user)
@@ -100,7 +100,7 @@ class UserDAO:
         if not user:
             return False
 
-        user.pwd = new_pwd
+        user.pwd = hash_password(new_pwd)
 
         await db.commit()
 
