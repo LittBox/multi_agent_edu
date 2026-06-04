@@ -5,22 +5,27 @@
 .settings-header h1 {
   margin: 0;
   font-size: 36px;
+  color: var(--text-main);
 }
 
 .settings-header p {
   margin: 8px 0 24px;
-  color: #6b7280;
+  color: var(--text-sub-light);
 }
 
 .settings-card {
-  background: white;
+  background: var(--glass-white);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
   padding: 28px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 24px 60px var(--shadow-dark);
 }
 
 .settings-card h2 {
   margin: 0 0 20px;
+  color: var(--text-main);
 }
 
 .settings-form {
@@ -33,13 +38,21 @@
   gap: 8px;
   font-weight: 600;
   font-size: 14px;
+  color: var(--text-main);
 }
 
 .settings-form input {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-white);
+  backdrop-filter: blur(14px);
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 16px;
+  color: var(--text-main);
+}
+
+.settings-form input::placeholder {
+  color: var(--text-sub-lighter);
 }
 
 .settings-form button {
@@ -47,7 +60,7 @@
   border: none;
   border-radius: 12px;
   padding: 12px;
-  background: #00a878;
+  background: linear-gradient(135deg, var(--primary-green), #4ee7c7);
   color: white;
   font-weight: 700;
   cursor: pointer;
@@ -58,11 +71,11 @@
 }
 
 .settings-success {
-  color: #059669;
+  color: var(--mint-green);
   margin: 0;
 }
 
 .settings-error {
-  color: #dc2626;
+  color: var(--pink-cloud);
   margin: 0;
 }

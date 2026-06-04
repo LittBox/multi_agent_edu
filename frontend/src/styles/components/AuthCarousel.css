@@ -5,8 +5,9 @@
   display: grid;
   place-content: center;
   overflow: hidden;
-  color: #404040;
+  color: var(--text-main);
   user-select: none;
+  background: linear-gradient(135deg, var(--deep-green) 0%, #1a6b63 50%, #2d7a6d 100%);
 }
 
 .carousel-wrapper {
@@ -49,6 +50,7 @@
   font-size: 0.75rem;
   white-space: nowrap;
   will-change: opacity, filter;
+  color: var(--text-main);
 }
 
 .controls {
@@ -63,12 +65,13 @@
   gap: 1rem;
   justify-content: center;
   border-radius: 9999px;
-  background: rgba(229, 229, 229, 0.5);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(229, 229, 229, 0.8);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  background: var(--glass-white);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   padding: 0 0.5rem;
-  color: #404040;
+  color: var(--text-main);
 }
 
 .ctrl-btn {
@@ -92,14 +95,14 @@
   border-radius: 9999px;
   height: 0.5rem;
   width: 0.5rem;
-  background-color: rgba(64, 64, 64, 0.3);
+  background-color: rgba(255, 255, 255, 0.3);
   cursor: pointer;
   transition: width 0.3s, background-color 0.3s;
 }
 
 .dot.active {
   width: 1.75rem;
-  background-color: currentColor;
+  background-color: var(--mint-green);
 }
 
 @media (min-width: 768px) {

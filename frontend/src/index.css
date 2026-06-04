@@ -1,9 +1,7 @@
 body {
   font-family: "Bricolage Grotesque", sans-serif;
-  background-color: #ececec;
+  background-color: transparent;
   margin: 0;
   min-height: 100vh;
-  display: grid;
-  place-content: center;
   overflow: hidden;
 }

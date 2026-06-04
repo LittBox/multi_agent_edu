@@ -5,6 +5,7 @@
   color: white;
   cursor: pointer;
   text-align: left;
+  transition: all 0.3s ease;
 }
 
 .dashboard-nav-item:not(.active):hover {

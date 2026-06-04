@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: linear-gradient(to bottom right, #50a3a2 0%, #53e3a6 100%);
+  background: linear-gradient(135deg, var(--deep-green) 0%, #1a6b63 50%, #2d7a6d 100%);
   font-family: "Source Sans Pro", sans-serif;
   color: white;
 }
@@ -23,6 +23,7 @@
   font-size: 40px;
   font-weight: 200;
   transition: 1s ease-in-out;
+  color: var(--text-main);
 }
 
 .login-wrapper.form-success .login-container h1 {
@@ -40,10 +41,11 @@
   width: 250px;
   margin: 0 auto 10px;
   padding: 10px 15px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 3px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
   outline: none;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--glass-white);
+  backdrop-filter: blur(14px);
   color: white;
   text-align: center;
   font-size: 18px;
@@ -52,33 +54,35 @@
 }
 
 .login-form input::placeholder {
-  color: white;
+  color: var(--text-sub-lighter);
 }
 
 .login-form input:hover {
-  background-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .login-form input:focus {
   width: 300px;
-  background-color: white;
-  color: #53e3a6;
+  background-color: rgba(98, 244, 213, 0.15);
+  color: var(--mint-green);
+  border-color: rgba(98, 244, 213, 0.4);
 }
 
 .login-form button {
   width: 250px;
   padding: 10px 15px;
   border: 0;
-  border-radius: 3px;
-  background-color: white;
-  color: #53e3a6;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary-green), #4ee7c7);
+  color: white;
   cursor: pointer;
   font-size: 18px;
   transition: 0.25s;
+  font-weight: 600;
 }
 
 .login-form button:hover {
-  background-color: rgb(245, 247, 249);
+  box-shadow: 0 8px 24px rgba(32, 214, 176, 0.28);
 }
 
 .login-form input,
@@ -101,7 +105,7 @@
   list-style: none;
   width: 40px;
   height: 40px;
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.08);
   animation: square 25s infinite linear;
 }
 
@@ -127,7 +131,7 @@
   width: 60px;
   height: 60px;
   animation-duration: 22s;
-  background-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(255, 255, 255, 0.12);
 }
 
 .bg-bubbles li:nth-child(5) {
@@ -139,7 +143,7 @@
   width: 120px;
   height: 120px;
   animation-delay: 3s;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .bg-bubbles li:nth-child(7) {
@@ -163,7 +167,7 @@
   height: 10px;
   animation-delay: 2s;
   animation-duration: 40s;
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .bg-bubbles li:nth-child(10) {
@@ -172,8 +176,6 @@
   height: 160px;
   animation-delay: 11s;
 }
-
-
 
 @keyframes square {
   0% {
@@ -189,7 +191,7 @@
   width: 400px;
   height: 1px;
   margin: 18px auto 14px;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .login-actions {
@@ -200,29 +202,29 @@
 }
 
 .login-link {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-sub);
   font-size: 15px;
   cursor: pointer;
   transition: 0.2s;
 }
 
 .login-link:hover {
-  color: #ffffff;
+  color: var(--text-main);
 }
 
 .register {
-  color: #e8fff2;
+  color: var(--mint-green);
   font-weight: 500;
 }
 
 .login-success {
-  color: #e8fff2;
+  color: var(--mint-green);
   font-size: 14px;
   margin: 8px 0 12px;
 }
 
 .login-error {
-  color: #ffdddd;
+  color: var(--pink-cloud);
   font-size: 14px;
   margin: 8px 0 12px;
 }

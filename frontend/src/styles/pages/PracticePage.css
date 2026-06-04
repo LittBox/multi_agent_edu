@@ -1,21 +1,25 @@
 .practice-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(5, 25, 30, 0.65);
   display: grid;
   place-items: center;
   z-index: 1000;
   padding: 24px;
+  backdrop-filter: blur(8px);
 }
 
 .practice-modal {
   width: min(640px, 100%);
   max-height: 90vh;
   overflow-y: auto;
-  background: white;
+  background: var(--glass-white);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
   padding: 28px;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 24px 60px var(--shadow-dark);
 }
 
 .practice-header {
@@ -27,20 +31,23 @@
 
 .practice-header h2 {
   margin: 0;
+  color: var(--text-main);
 }
 
 .practice-close {
   border: none;
-  background: #f3f4f6;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   padding: 8px 14px;
   cursor: pointer;
+  color: var(--text-sub-light);
 }
 
 .practice-stem {
   font-size: 18px;
   line-height: 1.6;
   margin-bottom: 20px;
+  color: var(--text-main);
 }
 
 .practice-options {
@@ -50,16 +57,19 @@
 
 .practice-option {
   text-align: left;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 14px 16px;
-  background: white;
+  background: var(--glass-white);
+  backdrop-filter: blur(14px);
   cursor: pointer;
+  color: var(--text-main);
+  transition: all 0.3s ease;
 }
 
 .practice-option.selected {
-  border-color: #10b981;
-  background: #ecfdf5;
+  border-color: rgba(98, 244, 213, 0.4);
+  background: rgba(98, 244, 213, 0.12);
 }
 
 .practice-actions {
@@ -72,7 +82,7 @@
   border: none;
   border-radius: 999px;
   padding: 12px 24px;
-  background: #00a878;
+  background: linear-gradient(135deg, var(--primary-green), #4ee7c7);
   color: white;
   font-weight: 700;
   cursor: pointer;
@@ -93,30 +103,33 @@
   margin: 0;
   padding: 12px 14px;
   border-radius: 12px;
-  background: #f8faf9;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
   font-size: 14px;
   line-height: 1.5;
-  color: #374151;
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .practice-agent {
-  background: #fff1f3;
-  color: #9f1239;
+  background: rgba(98, 244, 213, 0.08);
+  border-color: rgba(98, 244, 213, 0.2);
+  color: var(--mint-green);
 }
 
 .practice-success {
-  color: #059669;
+  color: var(--mint-green);
   font-weight: 600;
   margin: 0;
 }
 
 .practice-fail {
-  color: #dc2626;
+  color: var(--pink-cloud);
   font-weight: 600;
   margin: 0;
 }
 
 .practice-error,
 .practice-status {
-  color: #6b7280;
+  color: var(--text-sub-light);
 }
