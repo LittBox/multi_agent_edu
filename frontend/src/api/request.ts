@@ -37,7 +37,13 @@ instance.interceptors.response.use(
 
     return data;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    const message =
+      error.response?.data?.message ??
+      error.message ??
+      "请求失败";
+    return Promise.reject(new Error(message));
+  }
 );
 
 export default instance;

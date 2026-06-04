@@ -22,8 +22,6 @@ class AnswerRecordDAO:
         time_spent_seconds: float | None = None
     ) -> AnswerRecord:
 
-        print("before DAO user_answer:", user_answer)
-        print("before DAO is_correct:", is_correct)
         record = AnswerRecord(
             user_id=user_id,
             question_id=question_id,

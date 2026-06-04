@@ -1,11 +1,13 @@
 from .learning import (
     SubmitAnswerRequest,
-    AskQuestionRequest,
-    SendMessageRequest,
+    TutorAskRequest,
+    TutorMessageRequest,
+    HintRequest,
 )
 
 __all__ = [
     "SubmitAnswerRequest",
-    "AskQuestionRequest",
-    "SendMessageRequest",
+    "TutorAskRequest",
+    "TutorMessageRequest",
+    "HintRequest",
 ]

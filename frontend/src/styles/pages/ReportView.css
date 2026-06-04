@@ -1,0 +1,137 @@
+.report-view {
+  max-width: 1100px;
+}
+
+.report-header h1 {
+  margin: 0;
+  font-size: 36px;
+}
+
+.report-header p {
+  margin: 8px 0 24px;
+  color: #6b7280;
+}
+
+.report-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.report-metric {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  display: grid;
+  gap: 6px;
+  color: #00a878;
+}
+
+.report-metric strong {
+  font-size: 28px;
+  color: #1f2937;
+}
+
+.report-metric span {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.report-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
+}
+
+.report-card h2 {
+  margin: 0 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+}
+
+.report-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  height: 140px;
+}
+
+.report-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-bar {
+  width: 100%;
+  max-width: 48px;
+  min-height: 4px;
+  background: linear-gradient(180deg, #10b981, #00a878);
+  border-radius: 8px 8px 4px 4px;
+}
+
+.report-bar-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.report-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.report-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.report-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.report-list li div {
+  display: grid;
+  gap: 4px;
+}
+
+.report-list span {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.report-list em {
+  font-style: normal;
+  font-weight: 700;
+  color: #ef5f7e;
+}
+
+.report-empty,
+.report-loading {
+  color: #6b7280;
+}
+
+@media (max-width: 900px) {
+  .report-overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .report-columns {
+    grid-template-columns: 1fr;
+  }
+}

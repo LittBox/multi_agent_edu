@@ -61,7 +61,16 @@ class AgentOrchestrator:
 
     #创建答题记录 -> 获取或加载学习者模型 -> 发布学生提交事件 -> 更新学习者状态并持久化 -> 返回事件历史
     async def submit_answer(
-        self, learner_id: str, knowledge_id: str, is_correct: bool, question_id: str, user_answer: str, quality_q: int, started_at: datetime, db: AsyncSession
+        self,
+        learner_id: str,
+        knowledge_id: str,
+        is_correct: bool,
+        question_id: str,
+        user_answer: str,
+        quality_q: int,
+        started_at: datetime,
+        db: AsyncSession,
+        time_spent_seconds: float | None = None,
     ) -> list[Event]:
         """学生提交答案 -> 触发完整的Agent处理链。"""
        
@@ -75,6 +84,7 @@ class AgentOrchestrator:
             user_answer=user_answer,
             quality_q=quality_q,
             started_at=started_at,
+            time_spent_seconds=time_spent_seconds,
         )
         
         await self.get_or_load_learner_model(
@@ -94,6 +104,7 @@ class AgentOrchestrator:
                 "db": db,
                 "started_at": started_at,
                 "quality_q": quality_q,
+                "time_spent_seconds": time_spent_seconds,
             },
         )
 

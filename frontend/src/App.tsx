@@ -3,7 +3,7 @@ import "./App.css";
 import AuthPage from "./pages/AuthPage";
 import LoginFormPage from "./pages/LoginFormPage";
 import { useAuthStore } from "./stores/AuthStore";
-
+import DashboardPage from "./pages/DashboardPage";
 function App() {
   const { page, user, loading, goLogin, initAuth, logout } = useAuthStore();
 
@@ -25,23 +25,11 @@ function App() {
 
   return (
     <>
-      <header className="App-header">
-        <div className="Navbar">
-          <a href="/">Home</a>
-          <a href="/about">About</a>
-          <a href="/contact">Contact</a>
-        </div>
-
-        <div className="Auth">
-          <span>Welcome, {user?.username}!</span>
-          <button onClick={logout}>Logout</button>
-        </div>
-      </header>
-
-      <div className="Container">
-        <h1>Multi Agent Education</h1>
-        <p>Welcome to the EduAgent Demo! ...</p>
-      </div>
+        <DashboardPage
+          userId={user!.id}
+          username={user?.username}
+          onLogout={logout}
+        />
     </>
   );
 }

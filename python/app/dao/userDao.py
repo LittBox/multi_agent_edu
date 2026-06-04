@@ -12,7 +12,6 @@ class UserDAO:
         username: str,
         pwd: str
     ) -> User:
-        print("pwd:", pwd)
         user = User(
             username=username,
             pwd=hash_password(pwd)

@@ -47,8 +47,13 @@ const LoginFormPage: React.FC = () => {
       setPassword("");
       setErrorMsg("");
       setSuccessMsg("注册成功，请登录");
-    } catch {
-      setErrorMsg(formMode === "login" ? "账号或密码错误" : "注册失败");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "请求失败";
+      setErrorMsg(
+        message ||
+          (formMode === "login" ? "账号或密码错误" : "注册失败")
+      );
     }
   };
 

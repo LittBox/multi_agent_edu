@@ -1,0 +1,68 @@
+.settings-view {
+  max-width: 520px;
+}
+
+.settings-header h1 {
+  margin: 0;
+  font-size: 36px;
+}
+
+.settings-header p {
+  margin: 8px 0 24px;
+  color: #6b7280;
+}
+
+.settings-card {
+  background: white;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.settings-card h2 {
+  margin: 0 0 20px;
+}
+
+.settings-form {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-form label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.settings-form input {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 16px;
+}
+
+.settings-form button {
+  margin-top: 8px;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  background: #00a878;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settings-form button:disabled {
+  opacity: 0.6;
+}
+
+.settings-success {
+  color: #059669;
+  margin: 0;
+}
+
+.settings-error {
+  color: #dc2626;
+  margin: 0;
+}

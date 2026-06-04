@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
@@ -23,7 +23,11 @@ from app.api.websocket import ws_router
 from app.api.orchestrator import AgentOrchestrator
 
 from app.routers.auth import router as auth_router
+from app.routers.dashboard import router as dashboard_router
 from app.routers.education import router as education_router
+from app.routers.health import router as health_router
+from app.routers.knowledge import router as knowledge_router
+from app.routers.user import router as user_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -70,9 +74,30 @@ app.add_middleware(
 app.include_router(router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api")
 app.include_router(education_router, prefix="/api")
+app.include_router(dashboard_router, prefix="/api")
+app.include_router(knowledge_router, prefix="/api")
+app.include_router(user_router, prefix="/api")
+app.include_router(health_router, prefix="/api")
 app.include_router(ws_router)
 
-# 自定义异常处理器，专门捕获 FastAPI 的参数校验错误
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    detail = exc.detail
+    if isinstance(detail, list):
+        message = "; ".join(str(item) for item in detail)
+    else:
+        message = str(detail)
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "code": exc.status_code,
+            "message": message,
+            "data": None,
+        },
+    )
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = []

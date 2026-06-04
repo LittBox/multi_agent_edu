@@ -1,0 +1,122 @@
+.practice-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+.practice-modal {
+  width: min(640px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);
+}
+
+.practice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.practice-header h2 {
+  margin: 0;
+}
+
+.practice-close {
+  border: none;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.practice-stem {
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.practice-options {
+  display: grid;
+  gap: 12px;
+}
+
+.practice-option {
+  text-align: left;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: white;
+  cursor: pointer;
+}
+
+.practice-option.selected {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.practice-actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.practice-actions button {
+  border: none;
+  border-radius: 999px;
+  padding: 12px 24px;
+  background: #00a878;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.practice-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.practice-feedback {
+  display: grid;
+  gap: 10px;
+}
+
+.practice-explanation,
+.practice-agent {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f8faf9;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.practice-agent {
+  background: #fff1f3;
+  color: #9f1239;
+}
+
+.practice-success {
+  color: #059669;
+  font-weight: 600;
+  margin: 0;
+}
+
+.practice-fail {
+  color: #dc2626;
+  font-weight: 600;
+  margin: 0;
+}
+
+.practice-error,
+.practice-status {
+  color: #6b7280;
+}

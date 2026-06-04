@@ -1,6 +1,8 @@
-from app.dao.userDao import UserDAO
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.security import create_access_token, hash_password, verify_password
+
+from app.core.security import create_access_token, verify_password
+from app.dao.userDao import UserDAO
+from app.schemas.user_response import user_to_dict
 
 class AuthService:
     def __init__(self, db: AsyncSession):
@@ -19,13 +21,7 @@ class AuthService:
 
         return {
             "token": token,
-            "user": {
-                "id": user.user_id,
-                "username": user.username,
-                "email": getattr(user, "email", ""),
-                "avatar": getattr(user, "avatar", None),
-                "role": getattr(user, "role", "user"),
-            }
+            "user": user_to_dict(user),
         }   
 
     async def authenticate_user(self, username: str, password: str):
@@ -46,18 +42,17 @@ class AuthService:
         user = await UserDAO.get_by_id(self.db, user_id)
         if not user:
             raise ValueError("User not found")
-        return {"user_id": user.user_id, "username": user.username}
-    
-    
+        return user_to_dict(user)
+
     async def change_password(self, user_id: int, old_password: str, new_password: str):
         user = await UserDAO.get_by_id(self.db, user_id)
         if not user:
             raise ValueError("User not found")
-        if user.pwd != old_password:  # 注意：实际项目中请使用哈希密码
+        if not verify_password(old_password, user.pwd):
             raise ValueError("Old password is incorrect")
         if old_password == new_password:
             raise ValueError("New password cannot be the same as the old password")
-        await UserDAO.update_password(self.db, user_id, new_password)  # 注意：实际项目中请使用哈希密码
+        await UserDAO.update_password(self.db, user_id, new_password)
         return {"message": "Password changed successfully"}
     
     async def delete_user(self, user_id: int):

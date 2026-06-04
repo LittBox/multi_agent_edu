@@ -1,0 +1,12 @@
+.dashboard-nav-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dashboard-nav-item:not(.active):hover {
+  background: rgba(255, 255, 255, 0.12);
+}
