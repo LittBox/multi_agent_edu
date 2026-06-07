@@ -4,6 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.knowledge_point import KnowledgePoint
 
 
+"""
+知识点数据访问对象（DAO，Data Access Object），提供对知识点表的增删改查操作，包括创建知识点、根据ID查询知识点、查询所有知识点、删除知识点等功能。
+知识点DAO的主要职责包括：
+1. 创建知识点：根据知识点名称、所属学科、描述信息、父知识点ID、难度等级等信息创建新的知识点记录，并检查知识点名称的唯一性。
+2. 根据ID查询知识点：根据知识点ID查询知识点的详细信息，包括知识点名称、所属学科、描述信息、父知识点ID、难度等级等信息。
+3. 查询所有知识点：查询所有知识点记录，并返回一个列表，包含每条记录的详细信息。
+4. 删除知识点：根据知识点ID删除知识点记录
+"""
 class KnowledgePointDAO:
 
     @staticmethod

@@ -10,7 +10,11 @@ from app.services.dashboard_service import DashboardService
 
 MASTERY_MASTERED = 0.6
 
-
+"""
+报告服务类，主要职责包括：
+1. 生成学习报告
+2. 提供学习统计数据
+"""
 class ReportService:
     def __init__(self, db: AsyncSession):
         self.db = db

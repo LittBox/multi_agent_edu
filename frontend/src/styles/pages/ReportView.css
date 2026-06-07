@@ -144,3 +144,13 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.report-chart-box {
+  height: 260px;
+}
+
+.report-chart {
+  width: 100%;
+  height: 100%;
+}

@@ -3,7 +3,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import hash_password, verify_password
 from app.db.models.user import User
 
-
+"""
+用户数据访问对象
+主要职责包括：
+1. 创建用户
+2. 根据ID查询用户
+3. 根据用户名查询用户
+4. 查询所有用户
+5. 删除用户
+6. 更新用户密码
+7. 更新用户角色
+8. 更新用户联系方式
+"""
 class UserDAO:
 
     @staticmethod
@@ -103,4 +114,37 @@ class UserDAO:
 
         await db.commit()
 
+        return True
+
+    @staticmethod
+    async def update_role(
+        db: AsyncSession,
+        user_id: int,
+        role: str,
+    ) -> bool:
+        user = await UserDAO.get_by_id(db, user_id)
+        if not user:
+            return False
+
+        user.role = role
+        await db.commit()
+        return True
+
+    @staticmethod
+    async def update_contact_info(
+        db: AsyncSession,
+        user_id: int,
+        email: str | None = None,
+        phone: str | None = None,
+    ) -> bool:
+        user = await UserDAO.get_by_id(db, user_id)
+        if not user:
+            return False
+
+        if email is not None:
+            user.email = email
+        if phone is not None:
+            user.phone = phone
+
+        await db.commit()
         return True

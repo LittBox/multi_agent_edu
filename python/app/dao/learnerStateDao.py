@@ -5,7 +5,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.learner_state import LearnerState
 
-
+"""
+学习者状态数据访问对象（DAO，Data Access Object），提供对学习者状态表的增删改查操作，包括创建学习者状态、根据ID查询学习者状态、根据用户ID和知识点ID查询学习者状态、查询所有学习者状态、删除学习者状态、更新或插入学习者状态等功能。
+学习者状态DAO的主要职责包括：
+1. 创建学习者状态
+2. 根据ID查询学习者状态
+3. 根据用户ID和知识点ID查询学习者状态
+4. 查询所有学习者状态
+5. 删除学习者状态
+6. 更新或插入学习者状态
+"""
 class LearnerStateDAO:
 
     @staticmethod

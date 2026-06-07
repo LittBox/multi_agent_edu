@@ -23,6 +23,7 @@ from app.api.websocket import ws_router
 from app.api.orchestrator import AgentOrchestrator
 
 from app.routers.auth import router as auth_router
+from app.routers.academic import router as academic_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.education import router as education_router
 from app.routers.health import router as health_router
@@ -73,6 +74,7 @@ app.add_middleware(
 
 app.include_router(router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api")
+app.include_router(academic_router, prefix="/api")
 app.include_router(education_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(knowledge_router, prefix="/api")
@@ -141,5 +143,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         },
     )
 
+
+"""
+主应用入口，负责启动FastAPI应用并注册路由和中间件。
+主要功能包括：
+1. 配置日志记录
+2. 定义应用生命周期事件，启动和关闭Agent Orchestrator
+3. 注册API路由和WebSocket路由
+4. 定义全局异常处理器，统一处理HTTP异常和请求验证错误，并返回结构化的错误响应
+"""
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

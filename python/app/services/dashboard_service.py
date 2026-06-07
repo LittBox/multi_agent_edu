@@ -10,7 +10,12 @@ from app.db.models.learner_state import LearnerState
 MASTERY_MASTERED = 0.6
 DEFAULT_MINUTES_PER_ANSWER = 3
 
-
+"""
+仪表板服务类，主要职责包括：
+1. 获取仪表板摘要信息
+2. 获取知识卡片信息
+3. 获取学习路径信息
+"""
 class DashboardService:
     def __init__(self, db: AsyncSession):
         self.db = db

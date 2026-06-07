@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
-
+#知识点表，记录知识点信息，包括知识点名称、所属学科、难度等级、父知识点等
 class KnowledgePoint(Base):
     __tablename__ = "knowledge_points"
 

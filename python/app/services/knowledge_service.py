@@ -8,7 +8,11 @@ from app.db.models.question import Question
 
 MASTERY_MASTERED = 0.6
 
-
+"""
+知识服务类，主要职责包括：
+1. 获取知识库信息
+2. 获取知识详情
+"""
 class KnowledgeService:
     def __init__(self, db: AsyncSession):
         self.db = db

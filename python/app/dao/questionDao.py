@@ -3,7 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.question import Question
 
-
+"""
+题库数据访问对象（DAO，Data Access Object），提供对题库表的增删改查操作，包括创建题目、根据ID查询题目、查询所有题目、删除题目等功能。
+题库DAO的主要职责包括：
+1. 创建题目
+2. 根据ID查询题目
+3. 查询所有题目
+4. 删除题目
+"""
 class QuestionDAO:
 
     @staticmethod

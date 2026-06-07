@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
-
+#答题记录表
 class AnswerRecord(Base):
     __tablename__ = "answer_records"
 

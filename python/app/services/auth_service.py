@@ -4,6 +4,14 @@ from app.core.security import create_access_token, verify_password
 from app.dao.userDao import UserDAO
 from app.schemas.user_response import user_to_dict
 
+"""
+认证服务类，主要职责包括：
+1. 用户登录：验证用户的用户名和密码，生成访问令牌，并返回用户信息和令牌。
+2. 用户注册：创建新的用户账户，并返回新用户的信息。
+3. 获取用户信息：根据用户ID查询用户的详细信息，并返回用户信息。
+4. 修改密码：验证旧密码的正确性，更新用户的密码，并返回操作结果。
+5. 删除用户：根据用户ID删除用户账户，并返回操作结果。
+"""
 class AuthService:
     def __init__(self, db: AsyncSession):
         self.db = db

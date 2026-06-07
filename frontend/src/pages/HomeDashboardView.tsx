@@ -21,7 +21,7 @@ import {
   type PathNode,
   type StudyTrendPoint,
 } from "../api/dashboard";
-
+import ReactECharts from "echarts-for-react";
 interface HomeDashboardViewProps {
   userId: number;
   username?: string;
@@ -37,20 +37,7 @@ function formatMinutes(minutes: number): string {
   return `${Math.round(minutes)}min`;
 }
 
-function buildTrendPath(trend: StudyTrendPoint[]): string {
-  if (trend.length === 0) return "";
 
-  const maxMinutes = Math.max(...trend.map((p) => p.minutes), 1);
-  const coords = trend.map((point, index) => {
-    const x = 30 + (index / Math.max(trend.length - 1, 1)) * 690;
-    const y = 190 - (point.minutes / maxMinutes) * 140;
-    return { x, y };
-  });
-
-  return coords
-    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
-    .join(" ");
-}
 
 const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
   userId,
@@ -91,13 +78,100 @@ const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
   }, [loadDashboard]);
 
   const trend = summary?.trend ?? [];
-  const chartPath = buildTrendPath(trend);
-  const chartPoints = trend.map((point, index) => {
-    const maxMinutes = Math.max(...trend.map((p) => p.minutes), 1);
-    const x = 30 + (index / Math.max(trend.length - 1, 1)) * 690;
-    const y = 190 - (point.minutes / maxMinutes) * 140;
-    return { x, y, key: point.date };
-  });
+
+
+  const option = {
+    backgroundColor: "transparent",
+
+    tooltip: {
+      trigger: "axis",
+      backgroundColor: "rgba(6, 38, 42, 0.88)",
+      borderColor: "rgba(98, 244, 213, 0.35)",
+      textStyle: {
+        color: "#fff",
+      },
+      axisPointer: {
+        type: "line",
+        lineStyle: {
+          color: "rgba(98, 244, 213, 0.5)",
+          width: 2,
+        },
+      },
+    },
+
+    grid: {
+      left: 42,
+      right: 24,
+      top: 28,
+      bottom: 32,
+    },
+
+    xAxis: {
+      type: "category",
+      boundaryGap: false,
+      data: trend.map((item) => item.date.slice(5)),
+      axisLine: {
+        lineStyle: {
+          color: "rgba(255,255,255,0.22)",
+        },
+      },
+      axisTick: {
+        show: false,
+      },
+      axisLabel: {
+        color: "rgba(255,255,255,0.7)",
+      },
+      splitLine: {
+        show: true,
+        lineStyle: {
+          color: "rgba(255,255,255,0.07)",
+        },
+      },
+    },
+
+    yAxis: {
+      type: "value",
+      axisLabel: {
+        color: "rgba(255,255,255,0.6)",
+        formatter: "{value}min",
+      },
+      splitLine: {
+        show: true,
+        lineStyle: {
+          color: "rgba(255,255,255,0.07)",
+        },
+      },
+    },
+
+    series: [
+      {
+        name: "学习时间",
+        type: "line",
+        smooth: true,
+        data: trend.map((item) => item.minutes),
+        symbol: "circle",
+        symbolSize: 9,
+        lineStyle: {
+          width: 4,
+          color: "#20d6b0",
+        },
+        itemStyle: {
+          color: "#20d6b0",
+        },
+        emphasis: {
+          focus: "series",
+          scale: true,
+          itemStyle: {
+            borderColor: "#fff",
+            borderWidth: 3,
+          },
+        },
+        areaStyle: {
+          color: "rgba(32, 214, 176, 0.1)",
+        },
+      },
+    ],
+  };
 
   const emptySlots = Math.max(0, 2 - cards.length);
 
@@ -124,25 +198,12 @@ const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({
           <h2>学习时间趋势（近七天）</h2>
 
           <div className="chart-box">
-            <svg viewBox="0 0 760 220" className="study-chart" aria-hidden>
-              {chartPath && (
-                <path
-                  d={chartPath}
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="4"
-                />
-              )}
-              {chartPoints.map((point) => (
-                <circle
-                  key={point.key}
-                  cx={point.x}
-                  cy={point.y}
-                  r="6"
-                  fill="#10b981"
-                />
-              ))}
-            </svg>
+            <ReactECharts
+              option={option}
+              className="study-chart"
+              notMerge
+              lazyUpdate
+            />
           </div>
 
           <div className="study-summary">

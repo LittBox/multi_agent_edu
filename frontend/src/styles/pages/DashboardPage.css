@@ -1,5 +1,18 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
 .dashboard-page {
   min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   background-image:
     linear-gradient(
@@ -85,6 +98,7 @@
 .dashboard-main {
   flex: 1;
   min-height: 100vh;
+  overflow-y: auto;
 }
 
 :root {
@@ -158,7 +172,7 @@
 }
 
 .chart-box {
-  height: 220px;
+  height: 320px;
   padding: 18px 30px;
 }
 

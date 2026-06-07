@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
-
+#题表，记录题目信息，包括题干、选项、答案、解析、难度等级、所属知识点等
 class Question(Base):
     __tablename__ = "questions"
 

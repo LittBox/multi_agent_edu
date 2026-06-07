@@ -5,7 +5,7 @@ import {
   type LearningReport,
 } from "../api/education";
 import "../styles/pages/ReportView.css";
-
+import ReactECharts from "echarts-for-react";
 interface ReportViewProps {
   userId: number;
 }
@@ -30,7 +30,82 @@ const ReportView: React.FC<ReportViewProps> = ({ userId }) => {
   }
 
   const { overview, weak_points, subject_stats, daily_accuracy } = report;
-  const maxDaily = Math.max(...daily_accuracy.map((d) => d.total), 1);
+  const dailyAnswerOption = {
+  backgroundColor: "transparent",
+
+  tooltip: {
+    trigger: "axis",
+    backgroundColor: "rgba(6, 38, 42, 0.88)",
+    borderColor: "rgba(98, 244, 213, 0.35)",
+    textStyle: {
+      color: "#fff",
+    },
+    axisPointer: {
+      type: "shadow",
+      shadowStyle: {
+        color: "rgba(98, 244, 213, 0.08)",
+      },
+    },
+    formatter: "{b}<br/>答题量：{c} 题",
+  },
+
+  grid: {
+    left: 42,
+    right: 24,
+    top: 24,
+    bottom: 32,
+  },
+
+  xAxis: {
+    type: "category",
+    data: daily_accuracy.map((day) => day.date.slice(5)),
+    axisTick: {
+      show: false,
+    },
+    axisLine: {
+      lineStyle: {
+        color: "rgba(255,255,255,0.22)",
+      },
+    },
+    axisLabel: {
+      color: "rgba(255,255,255,0.7)",
+    },
+  },
+
+  yAxis: {
+    type: "value",
+    minInterval: 1,
+    axisLabel: {
+      color: "rgba(255,255,255,0.6)",
+      formatter: "{value}题",
+    },
+    splitLine: {
+      show: true,
+      lineStyle: {
+        color: "rgba(255,255,255,0.07)",
+      },
+    },
+  },
+
+  series: [
+    {
+      name: "答题量",
+      type: "bar",
+      data: daily_accuracy.map((day) => day.total),
+      barWidth: 28,
+      itemStyle: {
+        color: "#20d6b0",
+        borderRadius: [10, 10, 0, 0],
+      },
+      emphasis: {
+        focus: "series",
+        itemStyle: {
+          color: "#4ee7c7",
+        },
+      },
+    },
+  ],
+};
 
   return (
     <div className="report-view">
@@ -65,11 +140,14 @@ const ReportView: React.FC<ReportViewProps> = ({ userId }) => {
         <div className="report-bars">
           {daily_accuracy.map((day) => (
             <div key={day.date} className="report-bar-col">
-              <div
-                className="report-bar"
-                style={{ height: `${(day.total / maxDaily) * 120}px` }}
-                title={`${day.total} 题`}
-              />
+              <div className="report-chart-box">
+                <ReactECharts
+                  option={dailyAnswerOption}
+                  className="report-chart"
+                  notMerge
+                  lazyUpdate
+                />
+              </div>
               <span className="report-bar-label">
                 {day.date.slice(5)}
               </span>

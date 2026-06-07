@@ -8,7 +8,12 @@ from app.schemas.user_response import user_to_dict
 
 MASTERY_MASTERED = 0.6
 
-
+"""
+档案服务类，主要职责包括：
+1. 获取用户档案信息
+2. 获取用户统计数据
+3. 获取用户加入时间
+"""
 class ProfileService:
     def __init__(self, db: AsyncSession):
         self.db = db

@@ -5,7 +5,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.review_schedule import ReviewSchedule
 
-
+"""
+复习计划数据访问对象（DAO，Data Access Object），提供对复习计划表的增删改查操作，包括创建复习计划、根据ID查询复习计划、根据用户ID和知识点ID查询复习计划、查询所有复习计划、删除复习计划、更新复习计划、更新或插入复习计划等功能。
+复习计划DAO的主要职责包括：
+1. 创建复习计划
+2. 根据ID查询复习计划
+3. 根据用户ID和知识点ID查询复习计划
+4. 查询所有复习计划
+"""
 class ReviewScheduleDAO:
 
     @staticmethod

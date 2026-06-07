@@ -15,7 +15,11 @@ from app.utils.event_serializer import extract_teaching_reply, serialize_events
 
 MASTERY_MASTERED = 0.6
 
-
+"""
+学习服务类，主要职责包括：
+1. 提交答案
+2. 获取下一个问题
+"""
 class LearningService:
     def __init__(self, orchestrator=None):
         self.orchestrator = orchestrator
