@@ -8,8 +8,11 @@ from app.db.models.student import Student
 from app.db.models.teacher import Teacher
 from app.db.models.course import Course
 from app.db.models.teaching_class import TeachingClass
-from app.db.models.class_schedule import ClassSchedule
 from app.db.models.course_enrollment import CourseEnrollment
+from app.db.models.menu import Menu
+from app.db.models.role import Role
+from app.db.models.user_role import UserRole
+from app.db.models.role_menu import RoleMenu
 
 __all__ = [
     "User",
@@ -22,6 +25,9 @@ __all__ = [
     "Teacher",
     "Course",
     "TeachingClass",
-    "ClassSchedule",
     "CourseEnrollment",
+    "Menu",
+    "Role",
+    "UserRole",
+    "RoleMenu",
 ]

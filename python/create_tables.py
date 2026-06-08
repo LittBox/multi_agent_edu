@@ -2,20 +2,7 @@ import asyncio
 
 from app.db.base import Base
 from app.db.database import engine
-from app.db.models import (
-    User,
-    KnowledgePoint,
-    Question,
-    AnswerRecord,
-    LearnerState,
-    ReviewSchedule,
-    Student,
-    Teacher,
-    Course,
-    TeachingClass,
-    ClassSchedule,
-    CourseEnrollment,
-)
+
 
 
 

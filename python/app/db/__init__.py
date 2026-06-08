@@ -8,8 +8,8 @@ from app.db.models.student import Student
 from app.db.models.teacher import Teacher
 from app.db.models.course import Course
 from app.db.models.teaching_class import TeachingClass
-from app.db.models.class_schedule import ClassSchedule
 from app.db.models.course_enrollment import CourseEnrollment
+
 
 __all__ = [
     "AsyncSessionLocal",
@@ -23,6 +23,5 @@ __all__ = [
     "Teacher",
     "Course",
     "TeachingClass",
-    "ClassSchedule",
     "CourseEnrollment",
 ]

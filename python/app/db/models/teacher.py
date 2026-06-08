@@ -32,3 +32,6 @@ class Teacher(Base):
     )
 
     user = relationship("User")
+
+    def __repr__(self) -> str:
+        return f"Teacher(teacher_id={self.teacher_id}, teacher_no='{self.teacher_no}', teacher_name='{self.teacher_name}', department='{self.department}', title='{self.title}')"

@@ -34,3 +34,7 @@ class User(Base):
         CheckConstraint("role IN ('admin', 'teacher', 'student')", name="ck_user_role"),
         CheckConstraint("status IN ('active', 'inactive', 'deleted')", name="ck_user_status"),
     )
+
+
+    def __repr__(self) -> str:
+        return f"User(user_id={self.user_id}, username='{self.username}', role='{self.role}', email='{self.email}', status='{self.status}')"

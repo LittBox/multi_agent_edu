@@ -33,3 +33,6 @@ class Student(Base):
     )
 
     user = relationship("User")
+
+    def __repr__(self) -> str:
+        return f"Student(student_id={self.student_id}, student_no='{self.student_no}', student_name='{self.student_name}', major='{self.major}', grade={self.grade}, class_name='{self.class_name}')"
