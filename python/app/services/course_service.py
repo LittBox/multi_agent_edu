@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.dao.courseDao import CourseDAO
 from app.dao.teacherDao import TeacherDAO
 from app.dao.teachingClassDao import TeachingClassDAO
-from app.dao.classScheduleDao import ClassScheduleDAO
+
 
 """
 课程服务类，主要职责包括：

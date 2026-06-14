@@ -1,9 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, UTC, date, time
+from datetime import date, time
 from app.dao.enrollmentDao import CourseEnrollmentDAO
 from app.dao.studentDao import StudentDAO
 from app.dao.teachingClassDao import TeachingClassDAO
-from app.dao.classScheduleDao import ClassScheduleDAO
 from app.dao.courseDao import CourseDAO
 
 """
@@ -42,25 +41,23 @@ class EnrollmentService:
             if not existing_class:
                 continue
 
-            existing_schedules = await ClassScheduleDAO.get_by_class(
-                self.db, existing_class.class_id
-            )
+            existing_schedules = existing_class.schedules or []
 
             for existing_sched in existing_schedules:
                 for new_sched in new_schedules:
                     if (
-                        existing_sched.weekday == new_sched["weekday"]
+                        existing_sched.get("weekday") == new_sched.get("weekday")
                         and self._weeks_overlap(
-                            existing_sched.week_start,
-                            existing_sched.week_end,
-                            new_sched["week_start"],
-                            new_sched["week_end"],
+                            existing_sched.get("week_start"),
+                            existing_sched.get("week_end"),
+                            new_sched.get("week_start"),
+                            new_sched.get("week_end"),
                         )
                         and self._times_overlap(
-                            existing_sched.start_time,
-                            existing_sched.end_time,
-                            new_sched["start_time"],
-                            new_sched["end_time"],
+                            existing_sched.get("start_time"),
+                            existing_sched.get("end_time"),
+                            new_sched.get("start_time"),
+                            new_sched.get("end_time"),
                         )
                     ):
                         return True

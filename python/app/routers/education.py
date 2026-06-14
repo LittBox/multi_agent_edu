@@ -7,6 +7,7 @@ from app.dependencies.auth import get_current_user
 from app.dependencies.user_access import ensure_user_access
 from app.schemas.api_response import api_success
 from app.schemas.learning import (
+    ExplanationRequest,
     HintRequest,
     SubmitAnswerRequest,
     TutorAskRequest,
@@ -166,3 +167,16 @@ async def request_hint(
     service = _learning_service(request)
     result = await service.request_hint(db, req)
     return api_success(result, message="Hint generated successfully")
+
+
+@router.post("/explain")
+async def explain_answer(
+    req: ExplanationRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    ensure_user_access(current_user, req.user_id)
+    service = _learning_service(request)
+    result = await service.explain_answer(db, req)
+    return api_success(result, message="Explanation generated successfully")

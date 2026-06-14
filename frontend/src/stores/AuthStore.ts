@@ -7,6 +7,7 @@ import {
 } from "../api/auth";
 
 type AuthPageState = "carousel" | "login" | "home";
+type LoginRole = "admin" | "teacher" | "student";
 
 interface AuthStore {
   page: AuthPageState;
@@ -15,7 +16,7 @@ interface AuthStore {
 
   goLogin: () => void;
   initAuth: () => Promise<void>;
-  login: (username: string, pwd: string) => Promise<void>;
+  login: (username: string, pwd: string, role: LoginRole) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -43,8 +44,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }
   },
 
-  login: async (username, pwd) => {
-    const { token, user } = await apiLogin({ username, pwd });
+  login: async (username, pwd, role) => {
+    const { token, user } = await apiLogin({ username, pwd, role });
 
     localStorage.setItem("accessToken", token);
 

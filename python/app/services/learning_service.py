@@ -9,7 +9,12 @@ from app.db.models.knowledge_point import KnowledgePoint
 from app.db.models.learner_state import LearnerState
 from app.db.models.question import Question
 from app.db.models.review_schedule import ReviewSchedule
-from app.schemas.learning import HintRequest, TutorAskRequest, TutorMessageRequest
+from app.schemas.learning import (
+    ExplanationRequest,
+    HintRequest,
+    TutorAskRequest,
+    TutorMessageRequest,
+)
 from app.services.dashboard_service import DashboardService
 from app.utils.event_serializer import extract_teaching_reply, serialize_events
 
@@ -383,6 +388,20 @@ class LearningService:
         model = self.orchestrator.learner_models[learner_id]
         state = model.get_state(knowledge_id)
 
+        knowledge_point = (
+            await db.execute(
+                select(KnowledgePoint).where(KnowledgePoint.knowledge_id == req.knowledge_id)
+            )
+        ).scalar_one_or_none()
+
+        question = None
+        if req.question_id is not None:
+            question = (
+                await db.execute(
+                    select(Question).where(Question.question_id == req.question_id)
+                )
+            ).scalar_one_or_none()
+
         from app.core.event_bus import Event
 
         event = Event(
@@ -391,6 +410,10 @@ class LearningService:
             learner_id=learner_id,
             data={
                 "knowledge_id": knowledge_id,
+                "knowledge_name": knowledge_point.name if knowledge_point else knowledge_id,
+                "subject": knowledge_point.subject if knowledge_point else "",
+                "question_stem": question.stem if question else "",
+                "question_answer": question.answer if question else "",
                 "mastery": state.mastery,
                 "attempts": max(state.attempts, 1),
                 "level": state.level.value,
@@ -408,6 +431,29 @@ class LearningService:
             "hint": extract_teaching_reply(events),
             "events_triggered": len(events),
             "events": serialize_events(events),
+        }
+
+    async def explain_answer(self, db: AsyncSession, req: ExplanationRequest):
+        if not self.orchestrator:
+            raise RuntimeError("Orchestrator is required")
+
+        learner_id = str(req.user_id)
+        await self.orchestrator.get_or_load_learner_model(learner_id, db)
+        tutor = getattr(self.orchestrator, "tutor", None)
+        if tutor is None:
+            raise RuntimeError("Tutor agent is required")
+
+        explanation = await tutor.generate_answer_explanation(
+            knowledge_id=str(req.knowledge_id),
+            question=req.question,
+            user_answer=req.user_answer,
+            correct_answer=req.correct_answer,
+            is_correct=req.is_correct,
+        )
+        return {
+            "explanation": explanation,
+            "knowledge_id": req.knowledge_id,
+            "is_correct": req.is_correct,
         }
 
     async def get_orchestrator_progress(self, user_id: int):

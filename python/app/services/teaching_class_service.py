@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date, time
 from app.dao.teachingClassDao import TeachingClassDAO
-from app.dao.classScheduleDao import ClassScheduleDAO
 from app.dao.courseDao import CourseDAO
 from app.dao.teacherDao import TeacherDAO
 from app.dao.enrollmentDao import CourseEnrollmentDAO
@@ -245,10 +244,12 @@ class TeachingClassService:
             if capacity < teaching_class.current_count:
                 raise ValueError("Capacity cannot be lower than current enrollment")
 
-        start_date = kwargs.get("start_date", teaching_class.start_date)
-        end_date = kwargs.get("end_date", teaching_class.end_date)
-        if start_date is not None and end_date is not None and start_date >= end_date:
-            raise ValueError("Start date must be before end date")
+        start_week = kwargs.get("start_week", teaching_class.start_week)
+        end_week = kwargs.get("end_week", teaching_class.end_week)
+        if start_week is not None and start_week <= 0:
+            raise ValueError("Start week must be positive")
+        if start_week is not None and end_week is not None and end_week < start_week:
+            raise ValueError("End week must be greater than or equal to start week")
 
         updated = await TeachingClassDAO.update_class(self.db, class_id, **kwargs)
         if not updated:

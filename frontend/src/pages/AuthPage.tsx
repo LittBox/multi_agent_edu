@@ -1,13 +1,18 @@
+import { useNavigate } from "react-router-dom";
 import AuthCarousel from "../components/AuthCarousel/AuthCarousel";
 import GhostMouse from "../components/GhostMouse/GhostMouse";
+
 interface AuthPageProps {
-  onLogin: () => void;
+  onLogin?: () => void;
 }
 
-const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
+const AuthPage: React.FC<AuthPageProps> = () => {
+  const navigate = useNavigate();
+
   return (
     <div style={{ minHeight: "100vh", position: "relative" }}>
       <GhostMouse />
+
       <header
         style={{
           position: "fixed",
@@ -24,7 +29,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
         }}
       >
         <button
-          onClick={onLogin}
+          type="button"
+          onClick={() => navigate("/login")}
           style={{
             pointerEvents: "auto",
             padding: "0.6rem 1.2rem",
@@ -39,16 +45,16 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
         </button>
       </header>
 
-        <main
+      <main
         style={{
-            minHeight: "100vh",
-            display: "grid",
-            placeContent: "center",
-            overflow: "visible",
+          minHeight: "100vh",
+          display: "grid",
+          placeContent: "center",
+          overflow: "visible",
         }}
-        >
-            <AuthCarousel />
-        </main>
+      >
+        <AuthCarousel />
+      </main>
     </div>
   );
 };

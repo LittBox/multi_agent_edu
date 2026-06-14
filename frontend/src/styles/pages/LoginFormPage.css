@@ -9,9 +9,9 @@
 
 .login-container {
   max-width: 600px;
-  height: 400px;
+  min-height: 400px;
   margin: 0 auto;
-  padding: 80px 0;
+  padding: 64px 0;
   text-align: center;
   position: relative;
   top: 50%;
@@ -30,8 +30,63 @@
   transform: translateY(85px);
 }
 
+.role-switcher {
+  width: 400px;
+  margin: 12px auto 0px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.role-switcher-item {
+  position: relative;
+  z-index: 1;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 9px 0 10px;
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.role-switcher-item:hover {
+  color: white;
+  transform: translateY(-1px);
+}
+
+.role-switcher-item.is-active {
+  color: #eafffb;
+}
+
+.role-switcher-indicator {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: calc(100% / 3);
+  height: 3px;
+  border-radius: 999px;
+  background: #2dd4bf;
+  box-shadow: 0 0 10px rgba(45, 212, 191, 0.25);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.role-switcher-indicator[data-role="admin"] {
+  transform: translateX(0%);
+}
+
+.role-switcher-indicator[data-role="teacher"] {
+  transform: translateX(100%);
+}
+
+.role-switcher-indicator[data-role="student"] {
+  transform: translateX(200%);
+}
+
 .login-form {
-  padding: 20px 0;
+  padding: 16px 0;
   position: relative;
   z-index: 2;
 }

@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import date
 
 from app.schemas.class_schedule import ClassScheduleCreate
 
@@ -10,8 +9,9 @@ class TeachingClassCreate(BaseModel):
     semester: str
     class_name: str
     capacity: int
-    start_date: date
-    end_date: date
+    location: Optional[str] = None
+    start_week: int
+    end_week: int
 
 
 class TeachingClassCreateWithTeacher(TeachingClassCreate):
@@ -22,6 +22,10 @@ class TeachingClassCreateWithTeacher(TeachingClassCreate):
 class TeachingClassUpdate(BaseModel):
     class_name: Optional[str] = None
     capacity: Optional[int] = None
+    location: Optional[str] = None
+    start_week: Optional[int] = None
+    end_week: Optional[int] = None
+    status: Optional[str] = None
 
 
 class TeachingClassResponse(BaseModel):
@@ -32,8 +36,9 @@ class TeachingClassResponse(BaseModel):
     class_name: str
     capacity: int
     current_count: int
-    start_date: date
-    end_date: date
+    location: Optional[str] = None
+    start_week: int
+    end_week: int
     status: str
 
     class Config:

@@ -13,6 +13,9 @@ from app.db.models.menu import Menu
 from app.db.models.role import Role
 from app.db.models.user_role import UserRole
 from app.db.models.role_menu import RoleMenu
+from app.db.models.task import TaskBank, TaskRelease, TaskSubmission
+from app.db.models.exam import Exam, ExamQuestion, ExamSubmit
+from app.db.models.permission import Permission, RolePermission, PermissionMenu
 
 __all__ = [
     "User",
@@ -30,4 +33,13 @@ __all__ = [
     "Role",
     "UserRole",
     "RoleMenu",
+    "TaskBank",
+    "TaskRelease",
+    "TaskSubmission",
+    "Exam",
+    "ExamQuestion",
+    "ExamSubmit",
+    "Permission",
+    "RolePermission",
+    "PermissionMenu",
 ]

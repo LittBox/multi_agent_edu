@@ -63,32 +63,16 @@
   color: var(--text-main);
 }
 
-.report-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
-  height: 140px;
-}
-
-.report-bar-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.report-bar {
+.report-chart-box {
   width: 100%;
-  max-width: 48px;
-  min-height: 4px;
-  background: linear-gradient(180deg, var(--mint-green), var(--primary-green));
-  border-radius: 8px 8px 4px 4px;
+  height: 200px;
+  overflow: visible;
 }
 
-.report-bar-label {
-  font-size: 12px;
-  color: var(--text-sub-light);
+.report-chart {
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
 }
 
 .report-columns {
@@ -147,7 +131,7 @@
 
 
 .report-chart-box {
-  height: 260px;
+  height: 300px;
 }
 
 .report-chart {

@@ -19,6 +19,7 @@ class KnowledgePoint(Base):
         ForeignKey("knowledge_points.knowledge_id"),
         nullable=True,
     )
+    course_id: Mapped[int | None] = mapped_column(ForeignKey("courses.course_id"), nullable=True)
 
     difficulty: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
@@ -29,3 +30,4 @@ class KnowledgePoint(Base):
     )
 
     parent = relationship("KnowledgePoint", remote_side=[knowledge_id])
+    course = relationship("Course")

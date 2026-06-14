@@ -5,7 +5,6 @@ from app.db.database import get_db
 from app.db.models.user import User
 from app.dependencies.auth import get_current_user
 from app.schemas.api_response import api_success
-from app.schemas.class_schedule import ClassScheduleCreate, ClassScheduleResponse
 from app.schemas.course import CourseCreate, CourseResponse, CourseUpdate
 from app.schemas.enrollment import (
     CourseEnrollmentCreate,
@@ -25,7 +24,6 @@ from app.services.enrollment_service import EnrollmentService
 from app.services.student_service import StudentService
 from app.services.teacher_service import TeacherService
 from app.services.teaching_class_service import TeachingClassService
-from app.dao.classScheduleDao import ClassScheduleDAO
 from app.dao.courseDao import CourseDAO
 from app.dao.enrollmentDao import CourseEnrollmentDAO
 from app.dao.studentDao import StudentDAO
@@ -42,6 +40,22 @@ def _staff_role(user: User) -> str:
 def _require_staff(current_user: User) -> None:
     if _staff_role(current_user) not in {"admin", "teacher"}:
         raise HTTPException(status_code=403, detail="Permission denied")
+
+
+def _require_teacher_role(current_user: User) -> None:
+    if _staff_role(current_user) != "teacher":
+        raise HTTPException(status_code=403, detail="Only teachers can access this resource")
+
+
+async def _require_teacher_profile(db: AsyncSession, current_user: User):
+    _require_teacher_role(current_user)
+    teacher = await TeacherDAO.get_by_user_id(db, current_user.user_id)
+    if not teacher:
+        raise HTTPException(
+            status_code=400,
+            detail="当前用户没有绑定教师档案，不能执行教师业务。请联系管理员。",
+        )
+    return teacher
 
 
 async def _require_student_profile(db: AsyncSession, current_user: User):
@@ -67,19 +81,13 @@ def _class_payload(teaching_class) -> dict:
     return TeachingClassResponse.model_validate(teaching_class).model_dump(mode="json")
 
 
-def _schedule_payload(schedule) -> dict:
-    return ClassScheduleResponse.model_validate(schedule).model_dump(mode="json")
-
-
 async def _class_detail_payload(db: AsyncSession, teaching_class) -> dict:
     course = await CourseDAO.get_by_id(db, teaching_class.course_id)
     teacher = await TeacherDAO.get_by_id(db, teaching_class.teacher_id)
-    schedules = await ClassScheduleDAO.get_by_class(db, teaching_class.class_id)
 
     detail = TeachingClassDetail.model_validate(teaching_class).model_dump(mode="json")
     detail["course_name"] = course.course_name if course else None
     detail["teacher_name"] = teacher.teacher_name if teacher else None
-    detail["schedules"] = [_schedule_payload(schedule) for schedule in schedules]
     return detail
 
 
@@ -90,14 +98,12 @@ async def _enrolled_class_payload(db: AsyncSession, enrollment) -> dict:
 
     course = await CourseDAO.get_by_id(db, teaching_class.course_id)
     teacher = await TeacherDAO.get_by_id(db, teaching_class.teacher_id)
-    schedules = await ClassScheduleDAO.get_by_class(db, teaching_class.class_id)
 
     info = EnrolledClassInfo.model_validate(enrollment).model_dump(mode="json")
     info["course_name"] = course.course_name if course else ""
     info["teacher_name"] = teacher.teacher_name if teacher else ""
     info["semester"] = teaching_class.semester
     info["class_name"] = teaching_class.class_name
-    info["schedules"] = [_schedule_payload(schedule) for schedule in schedules]
     return info
 
 
@@ -329,14 +335,14 @@ async def create_course(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    _require_staff(current_user)
+    teacher = await _require_teacher_profile(db, current_user)
     service = CourseService(db)
     try:
         course = await service.create_course(
             course_code=req.course_code,
             course_name=req.course_name,
             credit=req.credit,
-            teacher_id=req.teacher_id,
+            teacher_id=teacher.teacher_id,
             description=req.description,
         )
         return api_success(_course_payload(course), message="Course created successfully")
@@ -438,18 +444,31 @@ async def create_teaching_class(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    _require_staff(current_user)
+    teacher = await _require_teacher_profile(db, current_user)
     service = TeachingClassService(db)
     try:
         teaching_class = await service.create_teaching_class(
             course_id=req.course_id,
-            teacher_id=req.teacher_id,
+            teacher_id=teacher.teacher_id,
             semester=req.semester,
             class_name=req.class_name,
             capacity=req.capacity,
-            start_date=req.start_date,
-            end_date=req.end_date,
-            schedules=[schedule.model_dump(mode="python") for schedule in req.schedules],
+            start_week=req.start_week,
+            end_week=req.end_week,
+            location=req.location,
+            schedules=[
+                {
+                    "day": schedule.weekday,
+                    "time": f"{schedule.start_time.strftime('%H:%M')}-{schedule.end_time.strftime('%H:%M')}",
+                    "weekday": schedule.weekday,
+                    "start_time": schedule.start_time.strftime("%H:%M"),
+                    "end_time": schedule.end_time.strftime("%H:%M"),
+                    "week_start": schedule.week_start,
+                    "week_end": schedule.week_end,
+                    "classroom": schedule.classroom,
+                }
+                for schedule in req.schedules
+            ],
         )
         return api_success(await _class_detail_payload(db, teaching_class), message="Teaching class created successfully")
     except ValueError as exc:

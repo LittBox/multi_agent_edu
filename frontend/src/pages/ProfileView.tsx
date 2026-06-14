@@ -7,6 +7,12 @@ interface ProfileViewProps {
   userId: number;
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: "管理员",
+  teacher: "教师",
+  student: "学生",
+};
+
 const ProfileView: React.FC<ProfileViewProps> = ({ userId }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,7 +79,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ userId }) => {
           </div>
           <div>
             <dt>角色</dt>
-            <dd>{user.role}</dd>
+            <dd>{ROLE_LABELS[user.role] ?? user.role}</dd>
           </div>
           <div>
             <dt>邮箱</dt>

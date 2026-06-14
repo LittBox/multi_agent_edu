@@ -5,6 +5,7 @@ Tutor Agent（教学Agent）-- 苏格拉底式提问教学。
 1. 根据学生水平采用苏格拉底式提问，引导而非告知
 2. 根据Assessment结果动态调整教学难度
 3. 当学生卡住时，请求Hint Agent提供分级提示
+4. 当用户明确要求“解析/解释”时，使用 DeepSeek 生成结构化、重点明确的答案解析
 
 面试要点：
 - 苏格拉底式教学：不给答案，通过反问让学生自己发现
@@ -12,9 +13,13 @@ Tutor Agent（教学Agent）-- 苏格拉底式提问教学。
 - 引导率85%目标：大部分情况只给暗示和引导
 """
 
+import json
 import logging
 
+from openai import AsyncOpenAI
+
 from app.agents.base_agent import BaseAgent
+from app.config.settings import settings
 from app.core.event_bus import Event, EventType
 
 logger = logging.getLogger(__name__)
@@ -51,6 +56,23 @@ SOCRATIC_PROMPTS = {
     ),
 }
 
+ANSWER_EXPLANATION_SYSTEM_PROMPT = (
+    "你是一个高质量的答题解析 agent。"
+    "你的任务是根据题目、用户答案、正确答案与知识点，输出结构化、重点明确、便于学生复盘的解析。\n\n"
+    "输出要求：\n"
+    "1. 必须使用中文。\n"
+    "2. 必须结构化，建议使用以下小标题：\n"
+    "   - 结论\n"
+    "   - 关键思路\n"
+    "   - 步骤解析\n"
+    "   - 易错点\n"
+    "   - 记忆/复盘建议\n"
+    "3. 解析要突出重点，不要长篇大论，不要空话套话。\n"
+    "4. 如果题目信息不足，也要先给出可用的分析框架，再说明需要补充哪些信息。\n"
+    "5. 适合学生阅读，语气清晰、直接、友好。\n"
+    "6. 如果能确定标准答案，先明确对错再分析原因。\n"
+)
+
 
 class TutorAgent(BaseAgent):
     """教学Agent：采用苏格拉底式提问教学法。"""
@@ -58,6 +80,14 @@ class TutorAgent(BaseAgent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._student_attempts: dict[str, dict[str, int]] = {}
+        self._deepseek_client = (
+            AsyncOpenAI(
+                api_key=settings.deepseek_api_key,
+                base_url="https://api.deepseek.com",
+            )
+            if settings.deepseek_api_key
+            else None
+        )
 
     @property
     def subscribed_events(self) -> list[EventType]:
@@ -86,7 +116,7 @@ class TutorAgent(BaseAgent):
         level = event.data.get("level", "beginner")
         is_correct = event.data.get("is_correct")
 
-        prompt_template = SOCRATIC_PROMPTS.get(level, SOCRATIC_PROMPTS["beginner"])
+        _ = SOCRATIC_PROMPTS.get(level, SOCRATIC_PROMPTS["beginner"])
 
         if is_correct is False:
             attempt_key = f"{learner_id}:{knowledge_id}"
@@ -122,6 +152,103 @@ class TutorAgent(BaseAgent):
             },
         )
 
+    def _build_deepseek_explanation_messages(
+        self,
+        knowledge_id: str,
+        question: str,
+        user_answer: str,
+        correct_answer: str,
+        is_correct: bool | None,
+    ) -> list[dict[str, str]]:
+        user_prompt = (
+            f"题目知识点：{knowledge_id}\n"
+            f"题目/问题：{question or '未提供'}\n"
+            f"学生答案：{user_answer or '未提供'}\n"
+            f"标准答案：{correct_answer or '未提供'}\n"
+            f"是否正确：{is_correct if is_correct is not None else '未知'}\n\n"
+            "请输出结构化解析，要求：\n"
+            "- 先给结论，再给原因\n"
+            "- 用清晰小标题分段\n"
+            "- 每一段控制简洁，突出重点\n"
+            "- 如果学生答案错误，明确指出错因和如何避免\n"
+            "- 如果学生答案正确，强调关键步骤和可迁移的方法\n"
+        )
+        return [
+            {"role": "system", "content": ANSWER_EXPLANATION_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
+
+    async def _generate_deepseek_explanation(
+        self,
+        knowledge_id: str,
+        question: str,
+        user_answer: str,
+        correct_answer: str,
+        is_correct: bool | None,
+    ) -> str:
+        if not settings.deepseek_api_key:
+            return self._fallback_explanation(
+                knowledge_id=knowledge_id,
+                question=question,
+                user_answer=user_answer,
+                correct_answer=correct_answer,
+                is_correct=is_correct,
+            )
+
+        try:
+            response = await self._deepseek_client.chat.completions.create(
+                model=settings.deepseek_model,
+                messages=self._build_deepseek_explanation_messages(
+                    knowledge_id=knowledge_id,
+                    question=question,
+                    user_answer=user_answer,
+                    correct_answer=correct_answer,
+                    is_correct=is_correct,
+                ),
+                temperature=0.2,
+            )
+            content = response.choices[0].message.content or ""
+            return content.strip() or self._fallback_explanation(
+                knowledge_id=knowledge_id,
+                question=question,
+                user_answer=user_answer,
+                correct_answer=correct_answer,
+                is_correct=is_correct,
+            )
+        except Exception as exc:  # pragma: no cover - external API failure path
+            logger.exception("DeepSeek explanation generation failed: %s", exc)
+            return self._fallback_explanation(
+                knowledge_id=knowledge_id,
+                question=question,
+                user_answer=user_answer,
+                correct_answer=correct_answer,
+                is_correct=is_correct,
+            )
+
+    def _fallback_explanation(
+        self,
+        knowledge_id: str,
+        question: str,
+        user_answer: str,
+        correct_answer: str,
+        is_correct: bool | None,
+    ) -> str:
+        status = "正确" if is_correct is True else "错误" if is_correct is False else "待判断"
+        return (
+            f"## 结论\n"
+            f"- 这道题的判断结果：{status}\n\n"
+            f"## 关键思路\n"
+            f"- 先抓住「{knowledge_id}」对应的核心概念，再对照题目要求逐步分析。\n\n"
+            f"## 步骤解析\n"
+            f"1. 题目要你解决什么问题：{question or '请补充题目内容'}\n"
+            f"2. 学生答案：{user_answer or '未提供'}\n"
+            f"3. 标准答案：{correct_answer or '未提供'}\n\n"
+            f"## 易错点\n"
+            f"- 容易忽略题干中的关键条件，或者步骤跳跃过快。\n\n"
+            f"## 记忆/复盘建议\n"
+            f"- 做完后把这类题的解题步骤总结成 1 个模板，下次先套模板再微调。"
+        )
+
     def _generate_teaching_response(
         self,
         knowledge_id: str,
@@ -133,8 +260,8 @@ class TutorAgent(BaseAgent):
         """
         生成教学回复。
 
-        实际生产环境中，这里会调用LLM（如GPT-4/MiniMax）。
-        当前用模板演示苏格拉底式教学的逻辑框架。
+        实际生产环境中，这里会调用LLM（如DeepSeek）。
+        当前优先演示苏格拉底式教学的逻辑框架。
         """
         if is_correct is True:
             return (
@@ -219,3 +346,20 @@ class TutorAgent(BaseAgent):
                     "message": "看起来这对你来说太简单了！让我给你一个更有挑战性的问题。",
                 },
             )
+
+    async def generate_answer_explanation(
+        self,
+        knowledge_id: str,
+        question: str,
+        user_answer: str,
+        correct_answer: str,
+        is_correct: bool | None = None,
+    ) -> str:
+        """对外提供答题解析，优先调用 DeepSeek。"""
+        return await self._generate_deepseek_explanation(
+            knowledge_id=knowledge_id,
+            question=question,
+            user_answer=user_answer,
+            correct_answer=correct_answer,
+            is_correct=is_correct,
+        )

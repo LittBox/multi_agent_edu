@@ -1,6 +1,6 @@
 from datetime import datetime, UTC
 
-from sqlalchemy import DateTime, ForeignKey, String, Integer, CheckConstraint, Index, and_
+from sqlalchemy import DateTime, ForeignKey, String, Integer, CheckConstraint, Index, and_, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -25,6 +25,7 @@ class CourseEnrollment(Base):
         nullable=True,
     )
     drop_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    course_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     is_deleted: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(

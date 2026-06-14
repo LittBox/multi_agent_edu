@@ -6,36 +6,49 @@ import {
   ChartColumn,
   Settings,
   LogOut,
+  GraduationCap,
+  ClipboardList,
 } from "lucide-react";
+import Tooltip from "@mui/material/Tooltip";
 import "../../styles/pages/DashboardPage.css";
 import "../../styles/components/DashboardLayout.css";
-import Tooltip from "@mui/material/Tooltip"
-import { view } from "motion/react-m";
+
+export type UserRole = "admin" | "teacher" | "student";
+
 export type DashboardView =
   | "home"
+  | "users"
+  | "admin-stats"
   | "warehouse"
   | "profile"
-  | "report"
-  | "settings";
+  | "settings"
+  | "courses"
+  | "student-courses"
+  | "tasks";
 
 interface DashboardLayoutProps {
   activeView: DashboardView;
   onNavigate: (view: DashboardView) => void;
   onLogout: () => void;
   children: ReactNode;
+  role: UserRole;
 }
 
-const NAV_ITEMS: Array<{
+const MENU_CONFIG: Array<{
   view: DashboardView;
-  label: string;
   tooltip: string;
   icon: typeof House;
+  roles: UserRole[];
 }> = [
-  { view: "home", tooltip:"首页", label: "", icon: House },
-  { view: "warehouse", tooltip:"知识仓库", label: "", icon: BookOpen },
-  { view: "profile", tooltip:"个人中心", label: "", icon: User },
-  { view: "report", tooltip:"学习分析报告", label: "", icon: ChartColumn },
-  { view: "settings", tooltip:"设置", label: "", icon: Settings },
+  { view: "home", tooltip: "首页", icon: House, roles: ["admin", "teacher", "student"] },
+  { view: "users", tooltip: "人员管理", icon: User, roles: ["admin"] },
+  { view: "admin-stats", tooltip: "人员统计", icon: ChartColumn, roles: ["admin"] },
+  { view: "courses", tooltip: "课程管理", icon: GraduationCap, roles: ["teacher"] },
+  { view: "tasks", tooltip: "作业题库", icon: ClipboardList, roles: ["teacher", "student"] },
+  { view: "student-courses", tooltip: "我的课程", icon: GraduationCap, roles: ["student"] },
+  { view: "warehouse", tooltip: "知识仓库", icon: BookOpen, roles: ["teacher", "student"] },
+  { view: "profile", tooltip: "个人中心", icon: User, roles: ["teacher", "student"] },
+  { view: "settings", tooltip: "设置", icon: Settings, roles: ["admin", "teacher", "student"] },
 ];
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -43,7 +56,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onNavigate,
   onLogout,
   children,
+  role,
 }) => {
+  const visibleNavItems = MENU_CONFIG.filter((item) => item.roles.includes(role));
+
   return (
     <div className="dashboard-page">
       <aside className="dashboard-sidebar">
@@ -52,19 +68,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </div>
 
         <nav className="dashboard-nav">
-          {NAV_ITEMS.map(({ view, tooltip, icon: Icon }) => (
-            <Tooltip
-              key={view}
-              title={tooltip}
-              placement="right"
-              arrow
-            >
+          {visibleNavItems.map(({ view, tooltip, icon: Icon }) => (
+            <Tooltip key={view} title={tooltip} placement="right" arrow>
               <button
                 type="button"
-                className={`dashboard-nav-item${
-                  activeView === view ? " active" : ""
-                }`}
+                className={`dashboard-nav-item${activeView === view ? " active" : ""}`}
                 onClick={() => onNavigate(view)}
+                aria-label={tooltip}
               >
                 <Icon size={24} />
               </button>
@@ -72,22 +82,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           ))}
         </nav>
 
-        <Tooltip
-              key="logout"
-              title="退出登录"
-              placement="right"
-              arrow
-            >
-          <button type="button" className="dashboard-logout" onClick={onLogout}>
+        <Tooltip title="退出登录" placement="right" arrow>
+          <button type="button" className="dashboard-logout" onClick={onLogout} aria-label="退出登录">
             <LogOut size={22} />
           </button>
         </Tooltip>
       </aside>
 
       <main className="dashboard-main">
-        <div className="dashboard-content">
-          {children}
-        </div>
+        <div className="dashboard-content">{children}</div>
       </main>
     </div>
   );

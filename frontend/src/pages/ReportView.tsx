@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, TrendingUp, AlertTriangle } from "lucide-react";
+import { BarChart3, AlertTriangle, TrendingUp } from "lucide-react";
 import {
   fetchLearningReport,
   type LearningReport,
@@ -21,6 +21,8 @@ const ReportView: React.FC<ReportViewProps> = ({ userId }) => {
       .finally(() => setLoading(false));
   }, [userId]);
 
+  const recentAnswers = report?.recent_answers ?? [];
+
   if (loading) {
     return <p className="report-loading">报告加载中…</p>;
   }
@@ -31,81 +33,89 @@ const ReportView: React.FC<ReportViewProps> = ({ userId }) => {
 
   const { overview, weak_points, subject_stats, daily_accuracy } = report;
   const dailyAnswerOption = {
-  backgroundColor: "transparent",
-
-  tooltip: {
-    trigger: "axis",
-    backgroundColor: "rgba(6, 38, 42, 0.88)",
-    borderColor: "rgba(98, 244, 213, 0.35)",
-    textStyle: {
-      color: "#fff",
+    backgroundColor: "transparent",
+    tooltip: {
+      trigger: "axis",
+      backgroundColor: "rgba(255, 255, 255, 0.96)",
+      borderColor: "rgba(15, 23, 42, 0.08)",
+      borderWidth: 1,
+      padding: [10, 14],
+      textStyle: {
+        color: "#0f172a",
+      },
+      axisPointer: {
+        type: "line",
+        lineStyle: {
+          color: "rgba(96, 165, 250, 0.55)",
+          width: 1.5,
+        },
+        crossStyle: {
+          color: "rgba(96, 165, 250, 0.35)",
+          width: 1,
+        },
+        label: {
+          backgroundColor: "rgba(96, 165, 250, 0.9)",
+          color: "#fff",
+        },
+      },
+      formatter: "{b}<br/>答题量：{c} 题",
+      extraCssText:
+        "box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12); border-radius: 10px;",
     },
-    axisPointer: {
-      type: "shadow",
-      shadowStyle: {
-        color: "rgba(98, 244, 213, 0.08)",
+    grid: {
+      left: 42,
+      right: 24,
+      top: 24,
+      bottom: 32,
+    },
+    xAxis: {
+      type: "category",
+      data: daily_accuracy.map((day) => day.date.slice(5)),
+      axisTick: {
+        show: false,
+      },
+      axisLine: {
+        lineStyle: {
+          color: "rgba(148, 163, 184, 0.35)",
+        },
+      },
+      axisLabel: {
+        color: "rgba(100, 116, 139, 0.9)",
       },
     },
-    formatter: "{b}<br/>答题量：{c} 题",
-  },
-
-  grid: {
-    left: 42,
-    right: 24,
-    top: 24,
-    bottom: 32,
-  },
-
-  xAxis: {
-    type: "category",
-    data: daily_accuracy.map((day) => day.date.slice(5)),
-    axisTick: {
-      show: false,
-    },
-    axisLine: {
-      lineStyle: {
-        color: "rgba(255,255,255,0.22)",
+    yAxis: {
+      type: "value",
+      minInterval: 1,
+      axisLabel: {
+        color: "rgba(100, 116, 139, 0.9)",
+        formatter: "{value}题",
       },
-    },
-    axisLabel: {
-      color: "rgba(255,255,255,0.7)",
-    },
-  },
-
-  yAxis: {
-    type: "value",
-    minInterval: 1,
-    axisLabel: {
-      color: "rgba(255,255,255,0.6)",
-      formatter: "{value}题",
-    },
-    splitLine: {
-      show: true,
-      lineStyle: {
-        color: "rgba(255,255,255,0.07)",
-      },
-    },
-  },
-
-  series: [
-    {
-      name: "答题量",
-      type: "bar",
-      data: daily_accuracy.map((day) => day.total),
-      barWidth: 28,
-      itemStyle: {
-        color: "#20d6b0",
-        borderRadius: [10, 10, 0, 0],
-      },
-      emphasis: {
-        focus: "series",
-        itemStyle: {
-          color: "#4ee7c7",
+      splitLine: {
+        show: true,
+        lineStyle: {
+          color: "rgba(148, 163, 184, 0.16)",
         },
       },
     },
-  ],
-};
+    series: [
+      {
+        name: "答题量",
+        type: "bar",
+        data: daily_accuracy.map((day) => day.total),
+        barWidth: 28,
+        itemStyle: {
+          color: "linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%)",
+          borderRadius: [10, 10, 0, 0],
+        },
+        emphasis: {
+          focus: "series",
+          itemStyle: {
+            color: "#3fdfbe",
+          },
+        },
+      },
+    ],
+  };
 
   return (
     <div className="report-view">
@@ -137,22 +147,13 @@ const ReportView: React.FC<ReportViewProps> = ({ userId }) => {
 
       <section className="report-card">
         <h2>近七日答题量</h2>
-        <div className="report-bars">
-          {daily_accuracy.map((day) => (
-            <div key={day.date} className="report-bar-col">
-              <div className="report-chart-box">
-                <ReactECharts
-                  option={dailyAnswerOption}
-                  className="report-chart"
-                  notMerge
-                  lazyUpdate
-                />
-              </div>
-              <span className="report-bar-label">
-                {day.date.slice(5)}
-              </span>
-            </div>
-          ))}
+        <div className="report-chart-box">
+          <ReactECharts
+            option={dailyAnswerOption}
+            className="report-chart"
+            notMerge
+            lazyUpdate
+          />
         </div>
       </section>
 
@@ -198,6 +199,25 @@ const ReportView: React.FC<ReportViewProps> = ({ userId }) => {
           )}
         </section>
       </div>
+
+      <section className="report-card">
+        <h2>最近答题记录</h2>
+        {recentAnswers.length === 0 ? (
+          <p className="report-empty">暂无最近答题记录</p>
+        ) : (
+          <ul className="report-list">
+            {recentAnswers.slice(0, 5).map((item) => (
+              <li key={item.record_id}>
+                <div>
+                  <strong>题目 #{item.question_id}</strong>
+                  <span>知识点 {item.knowledge_id} · {item.is_correct ? "正确" : "错误"}</span>
+                </div>
+                <em>{item.submitted_at.slice(0, 10)}</em>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 };

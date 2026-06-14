@@ -4,9 +4,26 @@ from app.dao.roleDao import RoleDAO
 from app.dao.userDao import UserDAO
 from app.db.models.user_role import UserRole
 from app.db.models.user import User
+from app.db.models.role import Role
 
 class UserRoleDAO:
 
+    @staticmethod
+    async def get_user_role(db: AsyncSession, user_id: int):
+        result = await db.execute(
+            select(UserRole).where(UserRole.user_id == user_id)
+        )
+        return result.scalars().first()
+
+    @staticmethod
+    async def get_role_name(db: AsyncSession, role_id: int):
+        result = await db.execute(
+            select(Role).where(Role.role_id == role_id)
+        )
+        role = result.scalars().first()
+        if not role:
+            return None
+        return role.role_name
 
     @staticmethod
     async def update_role(

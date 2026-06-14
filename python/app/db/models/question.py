@@ -16,6 +16,7 @@ class Question(Base):
         ForeignKey("knowledge_points.knowledge_id"),
         nullable=True,
     )
+    course_id: Mapped[int | None] = mapped_column(ForeignKey("courses.course_id"), nullable=True)
 
     question_type: Mapped[str] = mapped_column(String(30), nullable=False)
     stem: Mapped[str] = mapped_column(Text, nullable=False)
@@ -36,3 +37,4 @@ class Question(Base):
     )
 
     knowledge_point = relationship("KnowledgePoint")
+    course = relationship("Course")

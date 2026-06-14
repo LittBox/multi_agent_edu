@@ -29,6 +29,9 @@ from app.routers.education import router as education_router
 from app.routers.health import router as health_router
 from app.routers.knowledge import router as knowledge_router
 from app.routers.user import router as user_router
+from app.routers.tasks import router as tasks_router
+from app.routers.exams import router as exams_router
+from app.routers.admin import router as admin_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -66,7 +69,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -79,6 +87,10 @@ app.include_router(education_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(knowledge_router, prefix="/api")
 app.include_router(user_router, prefix="/api")
+app.include_router(tasks_router, prefix="/api")
+app.include_router(tasks_router, prefix="/api/v1")
+app.include_router(exams_router, prefix="/api/v1")
+app.include_router(admin_router, prefix="/api")
 app.include_router(health_router, prefix="/api")
 app.include_router(ws_router)
 

@@ -139,29 +139,55 @@ class HintAgent(BaseAgent):
             },
         )
 
-    def _generate_hint(self, knowledge_id: str, level: int) -> str:
+    def _generate_hint(self, event: Event, level: int) -> str:
         """
         生成提示文本。
 
         生产环境中会调用LLM根据具体题目生成，
         这里用模板演示分级提示的逻辑。
         """
-        templates = HINT_TEMPLATES[level]["templates"]
-        template = templates[0]
+        knowledge_id = event.data.get("knowledge_id", "")
+        knowledge_name = event.data.get("knowledge_name") or knowledge_id
+        subject = event.data.get("subject", "")
+        question_stem = event.data.get("question_stem", "")
+        question_answer = event.data.get("question_answer", "")
+
+        if subject or knowledge_name:
+            context_title = f"{subject} · {knowledge_name}" if subject else knowledge_name
+        else:
+            context_title = knowledge_id
 
         if level == HintLevel.METACOGNITIVE:
-            return f"💡 关于「{knowledge_id}」的提示：\n{template}"
-        elif level == HintLevel.SCAFFOLDING:
+            prompt = HINT_TEMPLATES[level]["templates"][0]
+            if subject:
+                prompt = (
+                    f"先回到{subject}的基础概念上想一想："
+                    f"这道题涉及的核心定义、公式或规律是什么？"
+                )
+            elif question_stem:
+                prompt = (
+                    f"先读一遍题干，圈出关键信息。"
+                    f"题目真正考查的概念是什么？"
+                )
+            return f"💡 关于「{context_title}」的提示：\n{prompt}"
+
+        if level == HintLevel.SCAFFOLDING:
+            if subject:
+                return (
+                    f"📝 关于「{context_title}」的引导提示：\n"
+                    f"这题本质上是在考{subject}里的基础方法。\n"
+                    f"先想一想这个知识点对应的公式、定理或步骤，再把题目条件一条条套进去。"
+                )
             return (
-                f"📝 关于「{knowledge_id}」的引导提示：\n"
-                f"这道题的关键是理解{knowledge_id}的核心概念。\n"
-                f"试着回忆一下相关的公式或定义，然后一步步来。"
+                f"📝 关于「{context_title}」的引导提示：\n"
+                f"先把题目条件整理出来，再对照你学过的步骤逐步推进。\n"
+                f"如果是选择题，优先用排除法和基础定义去判断。"
             )
-        else:
-            return (
-                f"📖 关于「{knowledge_id}」的详细解答：\n"
-                f"让我来帮你梳理一下解题思路。\n"
-                f"这次我会给你更详细的指导，但请你一定要自己重做一遍。\n"
-                f"【解题步骤】...\n"
-                f"建议复习完后再做2道同类型的练习巩固。"
-            )
+
+        return (
+            f"📖 关于「{context_title}」的详细解答：\n"
+            f"我先帮你把这题和对应知识点连起来，再给出具体步骤。\n"
+            f"题干信息：{question_stem or '未提供'}\n"
+            f"参考答案：{question_answer or '未提供'}\n"
+            f"你可以先对照上面的关键步骤重新做一遍。"
+        )

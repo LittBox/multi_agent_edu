@@ -19,7 +19,11 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ):
     auth_service = AuthService(db)
-    result = await auth_service.login(req.username, req.pwd)
+
+    try:
+        result = await auth_service.login(req.username, req.pwd, req.role)
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
 
     if not result:
         raise HTTPException(
@@ -38,7 +42,7 @@ async def register(
     auth_service = AuthService(db)
 
     try:
-        user = await auth_service.register_user(req.username, req.pwd)
+        user = await auth_service.register_user(req.username, req.pwd, req.role)
         return api_success(
             {"user": user_to_dict(user)},
             message="Registration successful",

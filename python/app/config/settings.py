@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o"
     minimax_api_key: str = ""
     minimax_model: str = "MiniMax-M2.7"
+    deepseek_api_key: str = ""
+    deepseek_model: str = "deepseek-chat"
 
     # Database
     database_url: str = "postgresql+asyncpg://admin@localhost:5432/edu_agent"

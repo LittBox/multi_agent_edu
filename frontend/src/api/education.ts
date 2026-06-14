@@ -167,3 +167,12 @@ export const requestHint = (params: {
   knowledge_id: number;
   question_id?: number;
 }) => request.post("/education/hint", params);
+
+export const explainAnswer = (params: {
+  user_id: number;
+  knowledge_id: number;
+  question?: string;
+  user_answer?: string;
+  correct_answer?: string;
+  is_correct?: boolean | null;
+}) => request.post("/education/explain", params);
