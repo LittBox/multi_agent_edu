@@ -443,3 +443,215 @@ body {
   color: var(--text-sub-light);
   margin: 0;
 }
+
+/* =========================================================
+   Latest dashboard shell update
+   适配 DashboardPage 作为主页面壳：侧边导航 + 内容区 + 多业务视图。
+   ========================================================= */
+
+.dashboard-sidebar {
+  width: 84px;
+  transition: width 0.25s ease, padding 0.25s ease;
+}
+
+.dashboard-nav-item,
+.dashboard-logout {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.dashboard-nav-item {
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.dashboard-nav-item:not(.active):hover,
+.dashboard-logout:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dashboard-content {
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.dashboard-main {
+  padding-right: 0;
+}
+
+.dashboard-grid {
+  align-items: start;
+}
+
+.knowledge-card,
+.add-card,
+.path-card,
+.study-card,
+.assistant-card {
+  position: relative;
+}
+
+.knowledge-card {
+  display: grid;
+  align-content: start;
+}
+
+.knowledge-card-empty {
+  grid-column: span 3;
+  min-height: 190px;
+}
+
+.path-card h2,
+.assistant-card h2 {
+  margin-top: 0;
+}
+
+.dashboard-loading {
+  padding: 12px 0;
+}
+
+@media (max-width: 1280px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .study-card,
+  .path-card {
+    grid-column: 1 / -1;
+  }
+
+  .assistant-card {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  body {
+    overflow: auto;
+  }
+
+  .dashboard-page {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .dashboard-sidebar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    bottom: auto;
+    width: 100%;
+    min-height: auto;
+    border-radius: 0;
+    padding: 12px;
+    flex-direction: row;
+    justify-content: space-between;
+    box-sizing: border-box;
+    z-index: 20;
+  }
+
+  .dashboard-avatar {
+    margin: 0;
+    width: 44px;
+    height: 44px;
+    font-size: 34px;
+    flex-shrink: 0;
+  }
+
+  .dashboard-nav {
+    width: auto;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0;
+  }
+
+  .dashboard-nav-item {
+    padding: 10px 12px;
+    font-size: 15px;
+    border-radius: 14px;
+    flex: 0 0 auto;
+  }
+
+  .dashboard-logout {
+    margin-top: 0;
+    width: auto;
+    padding: 10px 12px;
+    font-size: 15px;
+    border-radius: 14px;
+    flex-shrink: 0;
+  }
+
+  .dashboard-main {
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .dashboard-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 34px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .study-summary {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .study-summary div {
+    border-right: none;
+    border-bottom: 1px solid var(--glass-border-light);
+    padding-left: 0;
+    padding-bottom: 12px;
+  }
+
+  .study-summary div:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .path-list {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-content {
+    padding: 16px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 30px;
+  }
+
+  .chart-box {
+    height: 240px;
+    padding: 14px;
+  }
+
+  .knowledge-card,
+  .add-card,
+  .path-card,
+  .assistant-card {
+    padding: 20px;
+  }
+}

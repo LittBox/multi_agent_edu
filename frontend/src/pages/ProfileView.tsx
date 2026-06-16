@@ -1,94 +1,43 @@
-import { useEffect, useState } from "react";
-import { User as UserIcon, Award, Target, BookOpen } from "lucide-react";
-import { fetchUserProfile, type UserProfile } from "../api/user";
+import { useEffect } from "react";
+import { UserRound } from "lucide-react";
+import { useUserStore } from "../stores";
 import "../styles/pages/ProfileView.css";
 
-interface ProfileViewProps {
-  userId: number;
-}
+interface ProfileViewProps { userId: number; }
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: "管理员",
-  teacher: "教师",
-  student: "学生",
-};
+/** 个人主页：展示用户资料和学习统计。 */
+export default function ProfileView({ userId }: ProfileViewProps) {
+  const { profile, loading, error, loadProfile } = useUserStore();
 
-const ProfileView: React.FC<ProfileViewProps> = ({ userId }) => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchUserProfile(userId)
-      .then(setProfile)
-      .catch(() => setProfile(null))
-      .finally(() => setLoading(false));
-  }, [userId]);
-
-  if (loading) {
-    return <p className="profile-loading">加载中…</p>;
-  }
-
-  if (!profile) {
-    return <p className="profile-loading">无法加载个人资料</p>;
-  }
-
-  const { user, stats, joined_at } = profile;
-  const joinedDate = new Date(joined_at).toLocaleDateString("zh-CN");
+  useEffect(() => { if (userId) void loadProfile(userId); }, [userId, loadProfile]);
 
   return (
     <div className="profile-view">
       <header className="profile-header">
-        <div className="profile-avatar-lg">
-          <UserIcon size={56} strokeWidth={1.2} />
-        </div>
-        <div>
-          <h1>{user.username}</h1>
-          <p>注册于 {joinedDate}</p>
-        </div>
+        <div className="profile-avatar-lg"><UserRound size={48} /></div>
+        <div><h1>{profile?.user.username || "个人主页"}</h1><p>{profile?.user.email || "暂无邮箱"}</p></div>
       </header>
 
+      {loading && <p className="profile-loading">加载中…</p>}
+      {error && <p className="profile-loading">{error}</p>}
+
       <div className="profile-stats-grid">
-        <div className="profile-stat">
-          <BookOpen size={22} />
-          <strong>{stats.total_answers}</strong>
-          <span>累计答题</span>
-        </div>
-        <div className="profile-stat">
-          <Target size={22} />
-          <strong>{(stats.accuracy * 100).toFixed(1)}%</strong>
-          <span>总正确率</span>
-        </div>
-        <div className="profile-stat">
-          <Award size={22} />
-          <strong>{stats.mastered_count}</strong>
-          <span>已掌握知识点</span>
-        </div>
-        <div className="profile-stat">
-          <BookOpen size={22} />
-          <strong>{stats.knowledge_points_tracked}</strong>
-          <span>追踪知识点</span>
-        </div>
+        <div className="profile-stat"><strong>{profile?.stats.total_answers ?? 0}</strong><span>答题总数</span></div>
+        <div className="profile-stat"><strong>{profile?.stats.correct_answers ?? 0}</strong><span>正确题数</span></div>
+        <div className="profile-stat"><strong>{Math.round((profile?.stats.accuracy ?? 0) * 100)}%</strong><span>正确率</span></div>
+        <div className="profile-stat"><strong>{profile?.stats.mastered_count ?? 0}</strong><span>已掌握知识点</span></div>
       </div>
 
       <section className="profile-card">
-        <h2>账号信息</h2>
+        <h2>基础信息</h2>
         <dl>
-          <div>
-            <dt>用户名</dt>
-            <dd>{user.username}</dd>
-          </div>
-          <div>
-            <dt>角色</dt>
-            <dd>{ROLE_LABELS[user.role] ?? user.role}</dd>
-          </div>
-          <div>
-            <dt>邮箱</dt>
-            <dd>{user.email || "未设置"}</dd>
-          </div>
+          <div><dt>用户 ID</dt><dd>{profile?.user.user_id ?? userId}</dd></div>
+          <div><dt>用户名</dt><dd>{profile?.user.username ?? "-"}</dd></div>
+          <div><dt>角色</dt><dd>{profile?.user.role ?? "-"}</dd></div>
+          <div><dt>状态</dt><dd>{profile?.user.status ?? "-"}</dd></div>
+          <div><dt>加入时间</dt><dd>{profile?.joined_at ? new Date(profile.joined_at).toLocaleString() : "-"}</dd></div>
         </dl>
       </section>
     </div>
   );
-};
-
-export default ProfileView;
+}

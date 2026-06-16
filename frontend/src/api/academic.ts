@@ -1,18 +1,72 @@
 import request from "./request";
 
+/** =========================
+ * 学生 / 教师基础档案
+ * ========================= */
+export interface StudentCreateParams {
+  user_id: number;
+  student_no: string;
+  student_name: string;
+  major?: string | null;
+  grade?: number | null;
+  class_name?: string | null;
+}
+
+export type StudentUpdateParams = Partial<Omit<StudentCreateParams, "user_id">>;
+
+export interface Student {
+  student_id: number;
+  user_id: number;
+  student_no: string;
+  student_name: string;
+  major?: string | null;
+  grade?: number | null;
+  class_name?: string | null;
+  is_deleted?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface TeacherCreateParams {
+  user_id: number;
+  teacher_no: string;
+  teacher_name: string;
+  department?: string | null;
+  title?: string | null;
+}
+
+export type TeacherUpdateParams = Partial<Omit<TeacherCreateParams, "user_id">>;
+
+export interface Teacher {
+  teacher_id: number;
+  user_id: number;
+  teacher_no: string;
+  teacher_name: string;
+  department?: string | null;
+  title?: string | null;
+  is_deleted?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/** =========================
+ * 课程
+ * ========================= */
 export interface CourseCreateParams {
   course_code: string;
   course_name: string;
   credit: number;
   description?: string | null;
-  teacher_id: number;
+  /** 新后端由当前登录教师确定 teacher_id；保留可选字段兼容旧表单。 */
+  teacher_id?: number;
 }
 
 export interface CourseUpdateParams {
+  course_code?: string;
   course_name?: string;
   credit?: number;
   description?: string | null;
-  status?: string;
+  status?: "draft" | "active" | "closed" | string;
 }
 
 export interface Course {
@@ -23,8 +77,14 @@ export interface Course {
   description: string | null;
   created_by_teacher_id: number;
   status: string;
+  is_deleted?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
+/** =========================
+ * 教学班 / 选课
+ * ========================= */
 export interface TeachingClassSchedule {
   weekday: number;
   start_time: string;
@@ -32,11 +92,14 @@ export interface TeachingClassSchedule {
   week_start: number;
   week_end: number;
   classroom?: string | null;
+  day?: number;
+  time?: string;
 }
 
 export interface TeachingClassCreateParams {
   course_id: number;
-  teacher_id: number;
+  /** 新后端由当前登录教师确定 teacher_id；保留可选字段兼容旧表单。 */
+  teacher_id?: number;
   semester: string;
   class_name: string;
   capacity: number;
@@ -47,9 +110,12 @@ export interface TeachingClassCreateParams {
 }
 
 export interface TeachingClassUpdateParams {
+  course_id?: number;
+  teacher_id?: number;
   class_name?: string;
   capacity?: number;
-  status?: string;
+  current_count?: number;
+  status?: "open" | "closed" | "cancelled" | "finished" | string;
   semester?: string;
   location?: string | null;
   start_week?: number;
@@ -69,6 +135,10 @@ export interface TeachingClass {
   location?: string | null;
   start_week: number;
   end_week: number;
+  schedules?: TeachingClassSchedule[];
+  is_deleted?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface TeachingClassDetail extends TeachingClass {
@@ -80,9 +150,14 @@ export interface Enrollment {
   enrollment_id: number;
   class_id: number;
   student_id: number;
-  enroll_status: string;
+  enroll_status: "enrolled" | "dropped" | string;
   enrolled_at: string;
   dropped_at: string | null;
+  drop_reason?: string | null;
+  course_score?: number | null;
+  is_deleted?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface EnrolledClassInfo extends Enrollment {
@@ -90,93 +165,75 @@ export interface EnrolledClassInfo extends Enrollment {
   teacher_name: string;
   semester: string;
   class_name: string;
-  schedules: TeachingClassSchedule[];
+  schedules?: TeachingClassSchedule[];
 }
 
-export const listCourses = (): Promise<Course[]> =>
-  request.get("/academic/courses");
+export const academicApi = {
+  /** 学生档案 */
+  createStudent: (params: StudentCreateParams) => request.post<Student>("/academic/students", params),
+  listStudents: () => request.get<Student[]>("/academic/students"),
+  getStudent: (studentId: number) => request.get<Student>(`/academic/students/${studentId}`),
+  getStudentByUser: (userId: number) => request.get<Student>(`/academic/students/by-user/${userId}`),
+  updateStudent: (studentId: number, params: StudentUpdateParams) => request.patch<Student>(`/academic/students/${studentId}`, params),
+  deleteStudent: (studentId: number) => request.delete<boolean>(`/academic/students/${studentId}`),
 
-export const getCourse = (courseId: number): Promise<Course> =>
-  request.get(`/academic/courses/${courseId}`);
+  /** 教师档案 */
+  createTeacher: (params: TeacherCreateParams) => request.post<Teacher>("/academic/teachers", params),
+  listTeachers: () => request.get<Teacher[]>("/academic/teachers"),
+  getTeacher: (teacherId: number) => request.get<Teacher>(`/academic/teachers/${teacherId}`),
+  getTeacherByUser: (userId: number) => request.get<Teacher>(`/academic/teachers/by-user/${userId}`),
+  updateTeacher: (teacherId: number, params: TeacherUpdateParams) => request.patch<Teacher>(`/academic/teachers/${teacherId}`, params),
+  deleteTeacher: (teacherId: number) => request.delete<boolean>(`/academic/teachers/${teacherId}`),
 
-export const createCourse = (params: CourseCreateParams): Promise<Course> =>
-  request.post("/academic/courses", params);
+  /** 课程 */
+  listCourses: () => request.get<Course[]>("/academic/courses"),
+  getCourse: (courseId: number) => request.get<Course>(`/academic/courses/${courseId}`),
+  createCourse: (params: CourseCreateParams) => request.post<Course>("/academic/courses", params),
+  updateCourse: (courseId: number, params: CourseUpdateParams) => request.patch<Course>(`/academic/courses/${courseId}`, params),
+  updateCourseStatus: (courseId: number, status: string) => request.patch<Course>(`/academic/courses/${courseId}/status`, null, { params: { status } }),
+  deleteCourse: (courseId: number) => request.delete<boolean>(`/academic/courses/${courseId}`),
+  listTeacherCourses: (teacherId: number) => request.get<Course[]>(`/academic/teachers/${teacherId}/courses`),
 
-export const updateCourse = (
-  courseId: number,
-  params: CourseUpdateParams
-): Promise<Course> => request.patch(`/academic/courses/${courseId}`, params);
+  /** 教学班 */
+  listClasses: () => request.get<TeachingClass[]>("/academic/classes"),
+  listOpenClasses: (semester?: string) => request.get<TeachingClassDetail[]>("/academic/classes/available", { params: semester ? { semester } : undefined }),
+  getClassDetail: (classId: number) => request.get<TeachingClassDetail>(`/academic/classes/${classId}`),
+  createClass: (params: TeachingClassCreateParams) => request.post<TeachingClassDetail>("/academic/classes", params),
+  updateClass: (classId: number, params: TeachingClassUpdateParams) => request.patch<TeachingClass>(`/academic/classes/${classId}`, params),
+  updateClassStatus: (classId: number, status: string) => request.patch<TeachingClass>(`/academic/classes/${classId}/status`, null, { params: { status } }),
+  deleteClass: (classId: number) => request.delete<boolean>(`/academic/classes/${classId}`),
+  listCourseClasses: (courseId: number) => request.get<TeachingClassDetail[]>(`/academic/courses/${courseId}/classes`),
+  listTeacherClasses: (teacherId: number, semester?: string) => request.get<TeachingClass[]>(`/academic/teachers/${teacherId}/classes`, { params: semester ? { semester } : undefined }),
+  listClassStudents: (classId: number) => request.get<Enrollment[]>(`/academic/classes/${classId}/students`),
 
-export const updateCourseStatus = (
-  courseId: number,
-  status: string
-): Promise<Course> =>
-  request.patch(`/academic/courses/${courseId}/status`, null, {
-    params: { status },
-  });
+  /** 选课 */
+  enrollClass: (classId: number) => request.post<Enrollment>("/academic/enrollments", { class_id: classId }),
+  dropEnrollment: (enrollmentId: number) => request.delete<boolean>(`/academic/enrollments/${enrollmentId}`),
+  listMyEnrollments: (status = "enrolled") => request.get<EnrolledClassInfo[]>("/academic/enrollments/me", { params: { status } }),
+  listAvailableClasses: (semester?: string) => request.get<TeachingClassDetail[]>("/academic/enrollments/available", { params: semester ? { semester } : undefined }),
+  updateEnrollmentScore: (enrollmentId: number, courseScore: number | null) => request.patch<Enrollment>(`/academic/enrollments/${enrollmentId}/score`, null, { params: { course_score: courseScore } }),
+};
 
-export const deleteCourse = (courseId: number): Promise<null> =>
-  request.delete(`/academic/courses/${courseId}`);
-
-export const listClasses = (): Promise<TeachingClass[]> =>
-  request.get("/academic/classes");
-
-export const getClassDetail = (
-  classId: number
-): Promise<TeachingClassDetail> =>
-  request.get(`/academic/classes/${classId}`);
-
-export const createClass = (
-  params: TeachingClassCreateParams
-): Promise<TeachingClassDetail> =>
-  request.post("/academic/classes", params);
-
-export const updateClass = (
-  classId: number,
-  params: TeachingClassUpdateParams
-): Promise<TeachingClass> =>
-  request.patch(`/academic/classes/${classId}`, params);
-
-export const closeClass = (
-  classId: number,
-  teacherId: number
-): Promise<null> =>
-  request.patch(`/academic/classes/${classId}/close`, null, {
-    params: { teacher_id: teacherId },
-  });
-
-export const listClassStudents = (classId: number): Promise<Enrollment[]> =>
-  request.get(`/academic/classes/${classId}/students`);
-
-export const listClassSchedules = (
-  classId: number
-): Promise<TeachingClassSchedule[]> =>
-  request.get(`/academic/classes/${classId}/schedules`);
-
-export const listTeacherClasses = (
-  teacherId: number,
-  semester?: string
-): Promise<TeachingClass[]> =>
-  request.get(`/academic/teachers/${teacherId}/classes`, {
-    params: semester ? { semester } : undefined,
-  });
-
-export const enrollClass = (classId: number): Promise<Enrollment> =>
-  request.post("/academic/enrollments", { class_id: classId });
-
-export const dropEnrollment = (enrollmentId: number): Promise<null> =>
-  request.delete(`/academic/enrollments/${enrollmentId}`);
-
-export const listMyEnrollments = (
-  status = "enrolled"
-): Promise<EnrolledClassInfo[]> =>
-  request.get("/academic/enrollments/me", {
-    params: { status },
-  });
-
-export const listAvailableClasses = (
-  semester?: string
-): Promise<TeachingClassDetail[]> =>
-  request.get("/academic/enrollments/available", {
-    params: semester ? { semester } : undefined,
-  });
+/** 保留旧代码中的具名导出，避免页面组件大面积改 import。 */
+export const listCourses = academicApi.listCourses;
+export const getCourse = academicApi.getCourse;
+export const createCourse = academicApi.createCourse;
+export const updateCourse = academicApi.updateCourse;
+export const updateCourseStatus = academicApi.updateCourseStatus;
+export const deleteCourse = academicApi.deleteCourse;
+export const listClasses = academicApi.listClasses;
+export const getClassDetail = academicApi.getClassDetail;
+export const createClass = academicApi.createClass;
+export const updateClass = academicApi.updateClass;
+export const closeClass =  (classId: number, _teacherId?: number): Promise<TeachingClass> =>
+  academicApi.updateClassStatus(classId, "closed");
+export const listClassStudents = academicApi.listClassStudents;
+export const listClassSchedules = async (classId: number): Promise<TeachingClassSchedule[]> => {
+  const detail = await academicApi.getClassDetail(classId);
+  return detail.schedules ?? [];
+};
+export const listTeacherClasses = academicApi.listTeacherClasses;
+export const enrollClass = academicApi.enrollClass;
+export const dropEnrollment = academicApi.dropEnrollment;
+export const listMyEnrollments = academicApi.listMyEnrollments;
+export const listAvailableClasses = academicApi.listAvailableClasses;

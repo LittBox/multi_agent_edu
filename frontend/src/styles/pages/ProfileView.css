@@ -107,3 +107,50 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* =========================================================
+   Latest profile layout update
+   增强资料卡片与统计卡片在新版页面中的展示。
+   ========================================================= */
+
+.profile-view {
+  width: 100%;
+}
+
+.profile-card {
+  margin-bottom: 24px;
+}
+
+.profile-card dl div:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.profile-avatar-lg {
+  flex-shrink: 0;
+  font-size: 42px;
+}
+
+.profile-loading {
+  padding: 12px 0;
+}
+
+@media (max-width: 640px) {
+  .profile-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .profile-header h1 {
+    font-size: 30px;
+  }
+
+  .profile-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-card dl div {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

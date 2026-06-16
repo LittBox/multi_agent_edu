@@ -283,3 +283,55 @@
   font-size: 14px;
   margin: 8px 0 12px;
 }
+
+/* =========================================================
+   Latest login layout update
+   增强移动端适配，并保留原有登录动画和角色切换布局。
+   ========================================================= */
+
+.login-form button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.login-form input:-webkit-autofill {
+  -webkit-text-fill-color: white;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+.role-switcher-item:focus-visible,
+.login-form input:focus-visible,
+.login-form button:focus-visible,
+.login-link:focus-visible {
+  outline: 2px solid rgba(98, 244, 213, 0.6);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .login-container {
+    width: calc(100% - 32px);
+    padding: 32px 0;
+  }
+
+  .login-container h1 {
+    font-size: 32px;
+  }
+
+  .role-switcher,
+  .login-form input,
+  .login-form button,
+  .login-divider,
+  .login-actions {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .login-form input:focus {
+    width: 100%;
+  }
+
+  .login-actions {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}

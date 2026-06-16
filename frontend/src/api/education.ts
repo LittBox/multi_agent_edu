@@ -2,17 +2,35 @@ import request from "./request";
 
 export interface Question {
   question_id: number;
-  knowledge_id: number;
+  knowledge_id: number | null;
   question_type: string;
   stem: string;
   option_a: string | null;
   option_b: string | null;
   option_c: string | null;
   option_d: string | null;
+  answer?: string;
   difficulty: number;
   image_url: string | null;
-  reason: string;
+  explanation?: string | null;
+  reason?: string;
 }
+
+export interface QuestionCreateParams {
+  knowledge_id?: number | null;
+  question_type: string;
+  stem: string;
+  answer: string;
+  option_a?: string | null;
+  option_b?: string | null;
+  option_c?: string | null;
+  option_d?: string | null;
+  explanation?: string | null;
+  difficulty?: number;
+  image_url?: string | null;
+}
+
+export type QuestionUpdateParams = Partial<QuestionCreateParams>;
 
 export interface SubmitAnswerParams {
   user_id: number;
@@ -97,17 +115,8 @@ export interface LearningReport {
     mastery_percent: number;
     attempts: number;
   }>;
-  subject_stats: Array<{
-    subject: string;
-    count: number;
-    avg_mastery: number;
-  }>;
-  daily_accuracy: Array<{
-    date: string;
-    total: number;
-    correct: number;
-    accuracy: number;
-  }>;
+  subject_stats: Array<{ subject: string; count: number; avg_mastery: number }>;
+  daily_accuracy: Array<{ date: string; total: number; correct: number; accuracy: number }>;
   recent_answers: Array<{
     record_id: number;
     question_id: number;
@@ -117,56 +126,55 @@ export interface LearningReport {
   }>;
 }
 
-export const fetchNextQuestion = (
-  userId: number,
-  knowledgeId?: number
-): Promise<Question | null> =>
+/** 题库列表：GET /education/questions */
+export const fetchQuestions = (userId: number, knowledgeId?: number): Promise<Question[]> =>
+  request.get("/education/questions", {
+    params: {
+      user_id: userId,
+      ...(knowledgeId ? { knowledge_id: knowledgeId } : {}),
+    },
+  });
+
+export const createQuestion = (params: QuestionCreateParams): Promise<Question> =>
+  request.post("/education/questions", params);
+
+export const getQuestion = (questionId: number): Promise<Question> =>
+  request.get(`/education/questions/${questionId}`);
+
+export const updateQuestion = (questionId: number, params: QuestionUpdateParams): Promise<Question> =>
+  request.patch(`/education/questions/${questionId}`, params);
+
+export const deleteQuestion = (questionId: number): Promise<boolean> =>
+  request.delete(`/education/questions/${questionId}`);
+
+export const fetchNextQuestion = (userId: number, knowledgeId?: number): Promise<Question | null> =>
   request.get(`/education/next-question/${userId}`, {
     params: knowledgeId ? { knowledge_id: knowledgeId } : undefined,
   });
 
-export const submitAnswer = (
-  params: SubmitAnswerParams
-): Promise<SubmitAnswerResult> => request.post("/education/submit", params);
+export const submitAnswer = (params: SubmitAnswerParams): Promise<SubmitAnswerResult> =>
+  request.post("/education/submit", params);
 
 export const fetchProgress = (userId: number): Promise<LearnerProgress[]> =>
   request.get(`/education/progress/${userId}`);
 
-export const fetchReviews = (
-  userId: number,
-  dueOnly = true
-): Promise<ReviewItem[]> =>
-  request.get(`/education/reviews/${userId}`, {
-    params: { due_only: dueOnly },
-  });
+export const fetchReviews = (userId: number, dueOnly = true): Promise<ReviewItem[]> =>
+  request.get(`/education/reviews/${userId}`, { params: { due_only: dueOnly } });
 
-export const fetchAnswerHistory = (
-  userId: number,
-  limit = 20,
-  offset = 0
-): Promise<AnswerHistory> =>
+export const fetchAnswerHistory = (userId: number, limit = 20, offset = 0): Promise<AnswerHistory> =>
   request.get(`/education/answers/${userId}`, { params: { limit, offset } });
 
 export const fetchLearningReport = (userId: number): Promise<LearningReport> =>
   request.get(`/education/report/${userId}`);
 
-export const tutorAsk = (params: {
-  user_id: number;
-  knowledge_id: number;
-  question: string;
-}) => request.post("/education/question", params);
+export const tutorAsk = (params: { user_id: number; knowledge_id: number; question: string }) =>
+  request.post("/education/question", params);
 
-export const tutorMessage = (params: {
-  user_id: number;
-  message: string;
-  knowledge_id?: number;
-}) => request.post("/education/message", params);
+export const tutorMessage = (params: { user_id: number; message: string; knowledge_id?: number }) =>
+  request.post("/education/message", params);
 
-export const requestHint = (params: {
-  user_id: number;
-  knowledge_id: number;
-  question_id?: number;
-}) => request.post("/education/hint", params);
+export const requestHint = (params: { user_id: number; knowledge_id: number; question_id?: number }) =>
+  request.post("/education/hint", params);
 
 export const explainAnswer = (params: {
   user_id: number;

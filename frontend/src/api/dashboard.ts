@@ -33,23 +33,8 @@ export interface KnowledgeCard {
   streak: number;
 }
 
-export interface AgentSuggestionBlock {
-  title: string;
-  detail: string;
-  knowledge_name?: string;
-}
-
-export interface AgentSuggestions {
-  start_learning: AgentSuggestionBlock;
-  weak_point: AgentSuggestionBlock;
-  encouragement: AgentSuggestionBlock;
-}
-
 export const fetchDashboard = (userId: number): Promise<DashboardData> =>
   request.get(`/dashboard/${userId}`);
 
 export const fetchKnowledgeCards = (userId: number): Promise<KnowledgeCard[]> =>
   request.get(`/knowledge-cards/${userId}`);
-
-export const fetchAgentSuggestions = (userId: number): Promise<AgentSuggestions> =>
-  request.get(`/agent-suggestions/${userId}`);

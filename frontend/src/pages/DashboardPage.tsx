@@ -1,287 +1,153 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-import DashboardLayout, {
-  type DashboardView,
-} from "../components/DashboardLayout/DashboardLayout";
-
-import HomeDashboardView from "./HomeDashboardView";
-import PracticePage from "./PracticePage";
-import { adminApi, type AdminDashboardStats } from "../api/admin";
-
+import { BookOpen, CalendarDays, ClipboardList, FileText, GraduationCap, Home, LogOut, Settings, UserRound } from "lucide-react";
+import { useAuthStore, useDashboardStore } from "../stores";
+import KnowledgeWarehouseView from "./KnowledgeWarehouseView";
+import CourseManagementView from "./CourseManagementView";
+import StudentCourseView from "./StudentCourseView";
+import ExamView from "./ExamView";
+import TaskView from "./TaskView";
+import ProfileView from "./ProfileView";
+import ReportView from "./ReportView";
+import SettingsView from "./SettingsView";
+import AdminView from "./AdminView";
 import "../styles/pages/DashboardPage.css";
-import "../styles/pages/CourseManagementView.css";
-import "../styles/pages/KnowledgeWarehousePage.css";
-import "../styles/pages/ProfileView.css";
-import "../styles/pages/ReportView.css";
-import "../styles/pages/SettingsView.css";
 
-interface DashboardPageProps {
-  userId: number;
-  username?: string;
-  role: "admin" | "teacher" | "student";
-  onLogout: () => void;
-}
+type PageKey = "home" | "knowledge" | "courses" | "exams" | "tasks" | "profile" | "report" | "settings" | "admin";
 
-const DashboardPage: React.FC<DashboardPageProps> = ({
-  userId,
-  username,
-  role,
-  onLogout,
-}) => {
-  const navigate = useNavigate();
+const pageTitle: Record<PageKey, string> = {
+  home: "学习首页",
+  knowledge: "知识仓库",
+  courses: "课程选课",
+  exams: "考试中心",
+  tasks: "作业中心",
+  profile: "个人主页",
+  report: "学习报告",
+  settings: "系统设置",
+  admin: "后台管理",
+};
 
-  const [showPractice, setShowPractice] = useState(false);
-  const [practiceKnowledgeId, setPracticeKnowledgeId] = useState<
-    number | undefined
-  >();
-  const [adminStats, setAdminStats] = useState<AdminDashboardStats | null>(null);
-  const [adminStatsError, setAdminStatsError] = useState("");
+/** 主页面壳：统一侧边导航、角色路由和业务视图切换。 */
+export default function DashboardPage() {
+  const { user, logout } = useAuthStore();
+  const { dashboard, knowledgeCards, loading, error, loadHomeData } = useDashboardStore();
+  const [active, setActive] = useState<PageKey>("home");
+
+  const userId = user?.user_id ?? user?.id ?? 0;
+  const role = user?.role ?? "student";
 
   useEffect(() => {
-    if (role !== "admin") {
-      return;
+    if (userId) {
+      void loadHomeData(userId);
     }
+  }, [userId, loadHomeData]);
 
-    adminApi
-      .getDashboardStats()
-      .then((data) => {
-        setAdminStats(data);
-        setAdminStatsError("");
-      })
-      .catch((error) => {
-        setAdminStatsError(error instanceof Error ? error.message : "管理员统计加载失败");
-      });
+  const navItems = useMemo(() => {
+    const base = [
+      { key: "home" as PageKey, label: "首页", icon: Home },
+      { key: "knowledge" as PageKey, label: "知识", icon: BookOpen },
+      { key: "courses" as PageKey, label: role === "student" ? "选课" : "课程", icon: GraduationCap },
+      { key: "exams" as PageKey, label: "考试", icon: FileText },
+      { key: "tasks" as PageKey, label: "作业", icon: ClipboardList },
+      { key: "report" as PageKey, label: "报告", icon: CalendarDays },
+      { key: "profile" as PageKey, label: "我的", icon: UserRound },
+      { key: "settings" as PageKey, label: "设置", icon: Settings },
+    ];
+    return role === "admin" ? [...base, { key: "admin" as PageKey, label: "后台", icon: Settings }] : base;
   }, [role]);
 
-  const roleCountMap = useMemo(() => {
-    return Object.fromEntries((adminStats?.roles ?? []).map((item) => [item.role, item.count]));
-  }, [adminStats]);
+  const renderContent = () => {
+    if (!user) return null;
+    if (active === "knowledge") return <KnowledgeWarehouseView userId={userId} />;
+    if (active === "courses") return role === "student" ? <StudentCourseView /> : <CourseManagementView role={role} />;
+    if (active === "exams") return <ExamView role={role} />;
+    if (active === "tasks") return <TaskView role={role} />;
+    if (active === "profile") return <ProfileView userId={userId} />;
+    if (active === "report") return <ReportView userId={userId} />;
+    if (active === "settings") return <SettingsView />;
+    if (active === "admin") return <AdminView />;
 
-  const openPractice = (knowledgeId?: number) => {
-    setPracticeKnowledgeId(knowledgeId);
-    setShowPractice(true);
-  };
+    return (
+      <>
+        {loading && <p className="dashboard-loading">加载中…</p>}
+        {error && <p className="dashboard-loading">{error}</p>}
+        <div className="dashboard-grid">
+          <section className="study-card">
+            <h2>学习趋势</h2>
+            <div className="chart-box">
+              <svg className="study-chart" viewBox="0 0 700 260" role="img" aria-label="学习趋势图">
+                <polyline
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  points={(dashboard?.summary.trend ?? []).map((item, index) => `${40 + index * 100},${220 - Math.min(item.minutes, 120) * 1.5}`).join(" ")}
+                />
+              </svg>
+            </div>
+            <div className="study-summary">
+              <div><strong>{dashboard?.summary.today_study_minutes ?? 0}</strong><span>今日学习分钟</span></div>
+              <div><strong>{dashboard?.summary.week_avg_minutes ?? 0}</strong><span>周均学习分钟</span></div>
+              <div><strong>{dashboard?.summary.streak_days ?? 0}</strong><span>连续学习天数</span></div>
+            </div>
+          </section>
 
-  const handleNavigate = (view: DashboardView) => {
-    if (view === "home") {
-      navigate("/dashboard");
-      return;
-    }
+          <aside className="assistant-card">
+            <div className="assistant-title"><div className="robot">🤖</div><h2>智能学习助手</h2></div>
+            <div className="assistant-item">今日建议<span>先复习掌握度较低的知识点，再进入新知识点练习。</span></div>
+            <div className="assistant-item">学习提醒<span>错题会自动进入复习计划，请按时完成复习。</span></div>
+          </aside>
 
-    if (view === "student-courses" || view === "courses") {
-      navigate("/courses");
-      return;
-    }
+          {knowledgeCards.slice(0, 3).map((card) => (
+            <article className="knowledge-card" key={card.knowledge_id}>
+              <div className="knowledge-card-header"><h2>{card.name}</h2></div>
+              <p><span>掌握度</span><strong>{card.mastery_percent}%</strong></p>
+              <div className="progress-bar"><span style={{ width: `${card.mastery_percent}%` }} /></div>
+              <button className="knowledge-start" type="button" onClick={() => setActive("knowledge")}>继续学习</button>
+            </article>
+          ))}
 
-    if (view === "warehouse") {
-      navigate("/knowledge");
-      return;
-    }
-
-    if (view === "report") {
-      navigate("/report");
-      return;
-    }
-
-    if (view === "tasks") {
-      navigate("/tasks");
-      return;
-    }
-
-    if (view === "exams") {
-      navigate("/exams");
-      return;
-    }
-
-    if (view === "profile") {
-      navigate("/profile");
-      return;
-    }
-
-    if (view === "settings") {
-      navigate("/settings");
-      return;
-    }
+          <section className="path-card">
+            <h2>学习路径</h2>
+            <div className="path-list">
+              {(dashboard?.learning_path ?? []).slice(0, 6).map((node, index) => (
+                <div className="path-segment" key={node.knowledge_id}>
+                  <div className={`path-node ${node.status}`}>
+                    <span className="path-node-line">{node.name}</span>
+                    <small>{Math.round(node.mastery * 100)}%</small>
+                  </div>
+                  {index < Math.min((dashboard?.learning_path?.length ?? 0), 6) - 1 && <span className="path-arrow">→</span>}
+                </div>
+              ))}
+              {!dashboard?.learning_path?.length && <p className="path-empty">暂无学习路径数据</p>}
+            </div>
+          </section>
+        </div>
+      </>
+    );
   };
 
   return (
-    <>
-      {showPractice && (
-        <PracticePage
-          userId={userId}
-          knowledgeId={practiceKnowledgeId}
-          onClose={() => {
-            setShowPractice(false);
-            setPracticeKnowledgeId(undefined);
-          }}
-        />
-      )}
+    <div className="dashboard-page">
+      <aside className="dashboard-sidebar">
+        <div className="dashboard-avatar">{user?.username?.slice(0, 1)?.toUpperCase() || "U"}</div>
+        <nav className="dashboard-nav">
+          {navItems.map(({ key, label, icon: Icon }) => (
+            <button key={key} type="button" className={`dashboard-nav-item${active === key ? " active" : ""}`} onClick={() => setActive(key)} title={label}>
+              <Icon size={20} />
+            </button>
+          ))}
+        </nav>
+        <button type="button" className="dashboard-logout" onClick={() => void logout()}><LogOut size={20} /></button>
+      </aside>
 
-      <DashboardLayout
-        activeView="home"
-        onNavigate={handleNavigate}
-        onLogout={onLogout}
-        role={role}
-      >
-        {role === "student" && (
-          <HomeDashboardView
-            userId={userId}
-            username={username}
-            onPractice={() => openPractice()}
-          />
-        )}
-
-        {role === "teacher" && (
-          <>
-            <section className="dashboard-header">
-              <div>
-                <h1>教学概览</h1>
-                <p>欢迎回来，{username || "老师"}，这里是你的教学工作台。</p>
-              </div>
-            </section>
-
-            <div className="dashboard-grid">
-              <section className="study-card">
-                <h2>教学概况</h2>
-
-                <div className="study-summary">
-                  <div>
-                    <strong>0</strong>
-                    <span>已开课程</span>
-                  </div>
-                  <div>
-                    <strong>0</strong>
-                    <span>负责教学班</span>
-                  </div>
-                  <div>
-                    <strong>0</strong>
-                    <span>学生总数</span>
-                  </div>
-                </div>
-              </section>
-
-              <section className="course-card">
-                <h2>我的课程</h2>
-                <p className="course-empty">后续这里接入老师负责的课程数据。</p>
-              </section>
-
-              <section className="course-card">
-                <h2>我的教学班</h2>
-                <p className="course-empty">
-                  后续这里接入老师负责的教学班数据。
-                </p>
-              </section>
-
-              <section className="course-card">
-                <h2>课程管理快捷入口</h2>
-
-                <div className="course-header-actions">
-                  <button
-                    className="course-btn primary"
-                    type="button"
-                    onClick={() => navigate("/courses")}
-                  >
-                    新开课程
-                  </button>
-
-                  <button
-                    className="course-btn ghost"
-                    type="button"
-                    onClick={() => navigate("/courses")}
-                  >
-                    课程管理
-                  </button>
-                </div>
-              </section>
-
-              <section className="course-card">
-                <h2>教学班管理快捷入口</h2>
-
-                <div className="course-header-actions">
-                  <button className="course-btn primary" type="button">
-                    新开教学班
-                  </button>
-
-                  <button className="course-btn ghost" type="button">
-                    导出学生名单
-                  </button>
-                </div>
-              </section>
-            </div>
-          </>
-        )}
-
-        {role === "admin" && (
-          <>
-            <section className="dashboard-header">
-              <div>
-                <h1>管理概览</h1>
-                <p>
-                  欢迎回来，{username || "管理员"}，这里是系统管理工作台。
-                </p>
-              </div>
-            </section>
-
-            <div className="dashboard-grid">
-              <section className="study-card">
-                <h2>用户统计</h2>
-
-                <div className="study-summary">
-                  <div>
-                    <strong>{roleCountMap.student ?? 0}</strong>
-                    <span>学生数量</span>
-                  </div>
-                  <div>
-                    <strong>{roleCountMap.teacher ?? 0}</strong>
-                    <span>教师数量</span>
-                  </div>
-                  <div>
-                    <strong>{roleCountMap.admin ?? 0}</strong>
-                    <span>管理员数量</span>
-                  </div>
-                </div>
-              </section>
-
-              <section className="course-card">
-                <h2>用户管理</h2>
-                <p className="course-empty">
-                  可以修改用户角色、删除用户、修改用户信息、导出某一角色的所有用户信息。
-                </p>
-
-                <div className="course-header-actions">
-                  <button
-                    className="course-btn primary"
-                    type="button"
-                    onClick={() => navigate("/users")}
-                  >
-                    进入用户管理
-                  </button>
-                </div>
-              </section>
-
-              <section className="course-card">
-                <h2>课程管理</h2>
-                <p className="course-empty">
-                  管理员可以查看和维护平台课程信息。
-                </p>
-
-                <div className="course-header-actions">
-                  <button
-                    className="course-btn ghost"
-                    type="button"
-                    onClick={() => navigate("/courses")}
-                  >
-                    进入课程管理
-                  </button>
-                </div>
-              </section>
-            </div>
-          </>
-        )}
-      </DashboardLayout>
-    </>
+      <main className="dashboard-main">
+        <div className="dashboard-content">
+          <header className="dashboard-header">
+            <div><h1>{pageTitle[active]}</h1><p>{user?.username} · {role}</p></div>
+            <button type="button" className="dashboard-date"><CalendarDays size={18} /> {new Date().toLocaleDateString()}</button>
+          </header>
+          {renderContent()}
+        </div>
+      </main>
+    </div>
   );
-};
-
-export default DashboardPage;
+}

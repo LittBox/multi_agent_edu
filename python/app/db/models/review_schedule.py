@@ -1,40 +1,49 @@
-from datetime import datetime, UTC
+from __future__ import annotations
 
-from sqlalchemy import DateTime, ForeignKey, Float, Integer, UniqueConstraint
+from datetime import UTC, datetime
+
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
-#复习计划表，记录每个学生在每个知识点上的复习计划，包括下次复习时间、复习间隔、复习次数等信息
+
 class ReviewSchedule(Base):
+    """
+    复习计划表。
+
+    用于记录每个用户在每个知识点上的间隔复习计划。
+    user_id 关联 users.user_id，不是 students.student_id。
+    """
+
     __tablename__ = "review_schedules"
 
+    # 复习计划主键，自增。
     schedule_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
+    # 用户 ID。
     user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), nullable=False)
+
+    # 知识点 ID。
     knowledge_id: Mapped[int] = mapped_column(
         ForeignKey("knowledge_points.knowledge_id"),
-        nullable=False, 
+        nullable=False,
     )
 
-    """
-    easiness factor，表示记忆的难易程度，初始值为2.5，每次复习后根据复习效果进行调整
-    interval_days，表示下次复习的间隔天数，初始值为0，每次复习后根据复习效果进行调整
-    repetition，表示已经复习的次数，初始值为0，每次复习成功后加1，每次复习失败后重置为0
-    """
+    # easiness factor，记忆难易因子，SM-2 常用初始值为 2.5。
     ef: Mapped[float] = mapped_column(Float, default=2.5, nullable=False)
+
+    # 下次复习间隔天数。
     interval_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    # 已成功复习次数。
     repetition: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    last_review_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
+    # 上次复习时间。
+    last_review_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    next_review_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
+    # 下次复习时间。
+    next_review_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -44,7 +53,7 @@ class ReviewSchedule(Base):
     )
 
     user = relationship("User")
-    knowledge_point = relationship("KnowledgePoint")
+    knowledge_point = relationship("KnowledgePoint", back_populates="review_schedules")
 
     __table_args__ = (
         UniqueConstraint("user_id", "knowledge_id", name="uq_user_knowledge_review"),

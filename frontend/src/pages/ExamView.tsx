@@ -1,126 +1,95 @@
-import { useEffect, useState } from "react";
-import { examApi, type ExamDetail, type ExamItem, type ExamSubmissionItem } from "../api/exams";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, RefreshCw } from "lucide-react";
+import { useExamStore } from "../stores";
+import type { UserRole } from "../api/auth";
 import "../styles/pages/CourseManagementView.css";
 
-interface ExamViewProps {
-  role: "admin" | "teacher" | "student";
-}
+interface ExamViewProps { role: UserRole; }
 
+/** 考试页：已发布考试、正在考试、我的提交记录上下分区。 */
 export default function ExamView({ role }: ExamViewProps) {
-  const [exams, setExams] = useState<ExamItem[]>([]);
-  const [current, setCurrent] = useState<ExamDetail | null>(null);
-  const [submissions, setSubmissions] = useState<ExamSubmissionItem[]>([]);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const { exams, currentExam, questions, answers, mySubmissions, loading, error, message, loadExams, createExam, startExam, setAnswer, submitExam, loadMySubmissions } = useExamStore();
   const [title, setTitle] = useState("");
   const [courseId, setCourseId] = useState("");
-  const [message, setMessage] = useState("");
 
-  const load = async () => {
-    try {
-      setExams(await examApi.list());
-      if (role === "student") {
-        setSubmissions(await examApi.mySubmissions());
-      }
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "加载失败");
-    }
+  const refresh = async () => {
+    await loadExams();
+    if (role === "student") await loadMySubmissions();
   };
+  useEffect(() => { void refresh(); }, [role]);
 
-  useEffect(() => {
-    void load();
-  }, [role]);
+  const visibleExams = useMemo(() => role === "student" ? exams.filter((item) => ["published", "active", "ongoing"].includes(item.status)) : exams, [exams, role]);
 
-  const createExam = async () => {
+  const create = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!title.trim() || !courseId) return;
-    await examApi.create({ title: title.trim(), course_id: Number(courseId), duration_minutes: 60, exam_type: "quiz", status: "published" });
-    setTitle("");
-    setCourseId("");
-    await load();
-  };
-
-  const startExam = async (examId: number) => {
-    setCurrent(await examApi.start(examId));
-    setAnswers({});
-  };
-
-  const submitExam = async () => {
-    if (!current) return;
-    const result = await examApi.submit(current.exam_id, answers);
-    setMessage(`提交成功，客观题得分：${result.total_score ?? 0}`);
-    setCurrent(null);
-    await load();
+    await createExam({ title: title.trim(), course_id: Number(courseId), duration_minutes: 60, exam_type: "quiz", status: "published" });
+    setTitle(""); setCourseId("");
   };
 
   return (
     <div className="course-management-view">
       <header className="course-header">
-        <div>
-          <h1>考试中心</h1>
-          <p>教师创建考试和组卷，学生进入考试后完成答题提交，系统自动计算客观题分数。</p>
-        </div>
+        <div><h1>考试中心</h1><p>上方展示已发布考试，下方展示正在进行的考试和我的记录。</p></div>
+        <div className="course-header-actions"><button className="course-btn ghost" type="button" onClick={() => void refresh()}><RefreshCw size={16} />刷新</button></div>
       </header>
-
       {message && <p className="course-empty">{message}</p>}
+      {error && <p className="course-empty">{error}</p>}
 
       {(role === "teacher" || role === "admin") && (
         <section className="course-card">
           <h2>创建考试</h2>
-          <div className="course-form-grid">
-            <input placeholder="考试标题" value={title} onChange={(e) => setTitle(e.target.value)} />
-            <input placeholder="课程ID" value={courseId} onChange={(e) => setCourseId(e.target.value)} />
-            <button type="button" onClick={createExam}>创建并发布</button>
-          </div>
-          <p className="course-empty">组卷接口已提供：POST /api/v1/exams/{'{exam_id}'}/questions，可在题库页面继续接入选择题目。</p>
+          <form className="course-form" onSubmit={create}>
+            <label>考试标题<input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
+            <label>课程 ID<input value={courseId} onChange={(e) => setCourseId(e.target.value)} /></label>
+            <button className="course-btn primary" type="submit"><Plus size={16} />创建并发布</button>
+          </form>
         </section>
       )}
 
-      {current ? (
-        <section className="course-card">
-          <h2>{current.title}</h2>
-          <p>考试时长：{current.duration_minutes} 分钟</p>
-          {current.questions.length === 0 ? <p className="course-empty">当前试卷暂无题目，请联系教师组卷。</p> : null}
-          {current.questions.map((q, index) => (
-            <div className="course-list-item" key={q.exam_question_id}>
-              <div>
-                <strong>{index + 1}. {q.stem}</strong>
-                <p>A. {q.option_a ?? "-"}</p>
-                <p>B. {q.option_b ?? "-"}</p>
-                <p>C. {q.option_c ?? "-"}</p>
-                <p>D. {q.option_d ?? "-"}</p>
-                <input placeholder="答案" value={answers[String(q.question_id)] ?? ""} onChange={(e) => setAnswers((prev) => ({ ...prev, [String(q.question_id)]: e.target.value }))} />
-              </div>
-            </div>
+      <section className="course-card">
+        <h2>{role === "student" ? "已发布考试" : "考试列表"}</h2>
+        {loading && <p className="course-empty">加载中…</p>}
+        {!loading && visibleExams.length === 0 && <p className="course-empty">暂无考试</p>}
+        <div className="course-list course-grid-list">
+          {visibleExams.map((exam) => (
+            <article className="course-item course-mini-card" key={exam.exam_id}>
+              <div><h3>{exam.title}</h3><p>课程 ID：{exam.course_id} · {exam.duration_minutes} 分钟</p><span>{exam.exam_type} · {exam.status}</span></div>
+              {role === "student" && <div className="course-item-actions"><button type="button" onClick={() => void startExam(exam.exam_id)}>进入考试</button></div>}
+            </article>
           ))}
-          <button type="button" onClick={submitExam}>提交试卷</button>
-        </section>
-      ) : (
+        </div>
+      </section>
+
+      {role === "student" && (
         <section className="course-card">
-          <h2>考试列表</h2>
-          {exams.length === 0 ? <p className="course-empty">暂无考试</p> : null}
-          {exams.map((item) => (
-            <div className="course-list-item" key={item.exam_id}>
-              <div>
-                <strong>{item.title}</strong>
-                <p>课程 {item.course_id} · {item.exam_type} · {item.duration_minutes} 分钟 · {item.status}</p>
-              </div>
-              {role === "student" ? <button type="button" onClick={() => startExam(item.exam_id)}>进入考试</button> : null}
+          <h2>正在进行中的考试</h2>
+          {!currentExam && <p className="course-empty">点击上方考试卡片开始答题。</p>}
+          {currentExam && (
+            <div className="course-list">
+              <article className="course-item"><div><h3>{currentExam.title}</h3><p>考试时长：{currentExam.duration_minutes} 分钟</p></div></article>
+              {questions.length === 0 && <p className="course-empty">当前试卷暂无题目。</p>}
+              {questions.map((q, index) => (
+                <article className="course-item" key={q.exam_question_id}>
+                  <div>
+                    <h3>{index + 1}. {q.stem}</h3>
+                    <p>A. {q.option_a ?? "-"}</p><p>B. {q.option_b ?? "-"}</p><p>C. {q.option_c ?? "-"}</p><p>D. {q.option_d ?? "-"}</p>
+                    <input value={answers[String(q.question_id)] ?? ""} onChange={(e) => setAnswer(q.question_id, e.target.value)} placeholder="请输入答案" />
+                  </div>
+                </article>
+              ))}
+              <button className="course-btn primary" type="button" onClick={() => void submitExam(currentExam.exam_id)}>提交试卷</button>
             </div>
-          ))}
+          )}
         </section>
       )}
 
       {role === "student" && (
         <section className="course-card">
-          <h2>我的成绩</h2>
-          {submissions.length === 0 ? <p className="course-empty">暂无考试提交</p> : null}
-          {submissions.map((item) => (
-            <div className="course-list-item" key={item.exam_submit_id}>
-              <div>
-                <strong>考试 #{item.exam_id}</strong>
-                <p>得分：{item.total_score ?? "待评分"} · 评语：{item.teacher_comment ?? "暂无"}</p>
-              </div>
-            </div>
-          ))}
+          <h2>我的考试记录</h2>
+          <div className="course-list course-grid-list">
+            {mySubmissions.map((item) => <article className="course-item course-mini-card" key={item.exam_submit_id}><div><h3>考试 #{item.exam_id}</h3><p>得分：{item.total_score ?? "待评分"}</p><span>{item.teacher_comment || "暂无评语"}</span></div></article>)}
+          </div>
         </section>
       )}
     </div>

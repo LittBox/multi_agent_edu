@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, Query
+"""学习仪表盘路由。"""
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
@@ -12,40 +15,18 @@ router = APIRouter(tags=["dashboard"])
 
 
 @router.get("/dashboard/{user_id}")
-async def get_dashboard(
-    user_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
+async def get_dashboard(user_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """获取首页摘要和学习路径。"""
     ensure_user_access(current_user, user_id)
     service = DashboardService(db)
     summary = await service.get_dashboard_summary(user_id)
     path = await service.get_learning_path(user_id)
-    return api_success(
-        {"summary": summary, "learning_path": path},
-        message="Dashboard fetched successfully",
-    )
+    return api_success({"summary": summary, "learning_path": path}, message="Dashboard fetched successfully")
 
 
 @router.get("/knowledge-cards/{user_id}")
-async def get_knowledge_cards(
-    user_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
+async def get_knowledge_cards(user_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """获取知识掌握卡片。"""
     ensure_user_access(current_user, user_id)
-    service = DashboardService(db)
-    cards = await service.get_knowledge_cards(user_id)
-    return api_success(cards, message="Knowledge cards fetched successfully")
-
-
-@router.get("/agent-suggestions/{user_id}")
-async def get_agent_suggestions(
-    user_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    ensure_user_access(current_user, user_id)
-    service = DashboardService(db)
-    suggestions = await service.get_agent_suggestions(user_id)
-    return api_success(suggestions, message="Agent suggestions fetched successfully")
+    data = await DashboardService(db).get_knowledge_cards(user_id)
+    return api_success(data, message="Knowledge cards fetched successfully")

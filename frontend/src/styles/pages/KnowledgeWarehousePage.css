@@ -142,9 +142,23 @@
   color: var(--text-main);
 }
 
+.warehouse-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.warehouse-study-layout {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 300px;
+  gap: 20px;
+  align-items: start;
+}
+
 .warehouse-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: 1fr;
   gap: 20px;
 }
 
@@ -158,6 +172,12 @@
   box-shadow: 0 24px 60px var(--shadow-dark);
   display: grid;
   gap: 12px;
+  cursor: pointer;
+}
+
+.warehouse-card.selected {
+  outline: 2px solid rgba(98, 244, 213, 0.55);
+  transform: translateY(-1px);
 }
 
 .warehouse-card-top {
@@ -288,7 +308,332 @@
   box-shadow: 0 24px 60px var(--shadow-dark);
 }
 
+.warehouse-index-panel,
+.warehouse-question-panel,
+.warehouse-knowledge-panel {
+  background: var(--glass-white);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 24px 60px var(--shadow-dark);
+  display: grid;
+  gap: 16px;
+}
+
+.warehouse-panel-header h2,
+.warehouse-question-header h2 {
+  margin: 0;
+  color: var(--text-main);
+}
+
+.warehouse-panel-header p,
+.warehouse-question-header p {
+  margin: 6px 0 0;
+  color: var(--text-sub-light);
+}
+
+.warehouse-panel-header {
+  display: grid;
+  gap: 4px;
+}
+
+.warehouse-index-list {
+  display: grid;
+  gap: 10px;
+}
+
+.warehouse-index-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.24);
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.warehouse-index-item.active {
+  border-color: rgba(98, 244, 213, 0.45);
+  background: rgba(98, 244, 213, 0.12);
+}
+
+.warehouse-current-question {
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.24);
+  display: grid;
+  gap: 14px;
+}
+
+.warehouse-question-meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-sub-light);
+  font-size: 13px;
+}
+
+.warehouse-current-question h3 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--text-main);
+  line-height: 1.6;
+}
+
+.warehouse-option-list {
+  display: grid;
+  gap: 10px;
+}
+
+.warehouse-option-list button {
+  text-align: left;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.28);
+  color: var(--text-main);
+}
+
+.warehouse-question-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.warehouse-question-secondary {
+  border: 1px solid rgba(98, 244, 213, 0.36);
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: rgba(98, 244, 213, 0.12);
+  color: var(--mint-green);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.warehouse-knowledge-card {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.warehouse-joined-card {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.24);
+  display: grid;
+  gap: 4px;
+}
+
+.warehouse-joined-card span {
+  color: var(--text-sub-light);
+  font-size: 13px;
+}
+
+.warehouse-joined-card strong {
+  font-size: 16px;
+  color: var(--text-main);
+}
+
+.warehouse-knowledge-card div {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.24);
+  display: grid;
+  gap: 4px;
+  text-align: center;
+}
+
+.warehouse-knowledge-card strong {
+  font-size: 22px;
+  color: var(--text-main);
+}
+
+.warehouse-knowledge-card span {
+  color: var(--text-sub-light);
+  font-size: 13px;
+}
+
+.warehouse-question-list {
+  display: grid;
+  gap: 14px;
+}
+
+.warehouse-question-card {
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.28);
+  display: grid;
+  gap: 10px;
+}
+
+.warehouse-question-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-sub-light);
+}
+
+.warehouse-question-stem {
+  margin: 0;
+  color: var(--text-main);
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.warehouse-question-options {
+  display: grid;
+  gap: 6px;
+  color: var(--text-sub-light);
+  font-size: 14px;
+}
+
+.warehouse-question-practice {
+  justify-self: start;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: rgba(98, 244, 213, 0.15);
+  color: var(--mint-green);
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .warehouse-placeholder h2 {
   margin: 0 0 8px;
   color: var(--text-main);
+}
+
+/* =========================================================
+   Latest warehouse layout update
+   适配新版 KnowledgeWarehouseView：学科上下分组，每组四卡片网格。
+   ========================================================= */
+
+.warehouse-view {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.warehouse-group-list {
+  display: grid;
+  gap: 26px;
+}
+
+.warehouse-subject-section {
+  display: grid;
+  gap: 16px;
+}
+
+.warehouse-subject-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.warehouse-subject-header h2 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 24px;
+}
+
+.warehouse-subject-header span {
+  color: var(--text-sub-light);
+  font-size: 14px;
+}
+
+.warehouse-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.warehouse-card {
+  min-height: 250px;
+  align-content: start;
+}
+
+.warehouse-card-top span:last-child {
+  color: var(--text-sub-lighter);
+  font-size: 12px;
+}
+
+.warehouse-start {
+  align-self: end;
+}
+
+.warehouse-card.status-mastered {
+  border-color: rgba(98, 244, 213, 0.32);
+}
+
+.warehouse-card.status-learning {
+  border-color: rgba(255, 143, 159, 0.28);
+}
+
+.warehouse-card.status-locked {
+  opacity: 0.72;
+}
+
+.warehouse-toolbar {
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 1280px) {
+  .warehouse-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .warehouse-study-layout {
+    grid-template-columns: 100px minmax(0, 1fr);
+  }
+
+  .warehouse-knowledge-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 960px) {
+  .warehouse-header,
+  .warehouse-subject-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .warehouse-stats,
+  .warehouse-grid,
+  .warehouse-knowledge-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .warehouse-layout,
+  .warehouse-study-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .warehouse-header h1 {
+    font-size: 32px;
+  }
+
+  .warehouse-stats,
+  .warehouse-grid,
+  .warehouse-knowledge-card {
+    grid-template-columns: 1fr;
+  }
+
+  .warehouse-card,
+  .warehouse-empty,
+  .warehouse-placeholder,
+  .warehouse-index-panel,
+  .warehouse-question-panel,
+  .warehouse-knowledge-panel {
+    padding: 18px;
+  }
 }

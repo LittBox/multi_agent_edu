@@ -1,6 +1,4 @@
-.settings-view {
-  max-width: 520px;
-}
+
 
 .settings-header h1 {
   margin: 0;
@@ -18,8 +16,11 @@
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
   border: 1px solid var(--glass-border);
+  width: 35%;
   border-radius: 20px;
   padding: 28px;
+  margin-bottom: 24px;
+  margin-left: 3%;
   box-shadow: 0 24px 60px var(--shadow-dark);
 }
 
@@ -78,4 +79,53 @@
 .settings-error {
   color: var(--pink-cloud);
   margin: 0;
+}
+
+/* =========================================================
+   Latest settings layout update
+   适配账号设置与修改密码表单。
+   ========================================================= */
+
+.settings-view {
+  width: 100%;
+  display: flex;
+  width: 100%;
+  gap: 32px;
+
+}
+
+.settings-form input:focus {
+  outline: none;
+  border-color: rgba(98, 244, 213, 0.45);
+  background: rgba(98, 244, 213, 0.1);
+}
+
+.settings-form button:hover:not(:disabled) {
+  box-shadow: 0 8px 24px rgba(32, 214, 176, 0.28);
+}
+
+.settings-success,
+.settings-error {
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.settings-success {
+  background: rgba(98, 244, 213, 0.12);
+  border: 1px solid rgba(98, 244, 213, 0.3);
+}
+
+.settings-error {
+  background: rgba(255, 143, 159, 0.1);
+  border: 1px solid rgba(255, 143, 159, 0.3);
+}
+
+@media (max-width: 640px) {
+  .settings-header h1 {
+    font-size: 30px;
+  }
+
+  .settings-card {
+    padding: 22px;
+  }
 }

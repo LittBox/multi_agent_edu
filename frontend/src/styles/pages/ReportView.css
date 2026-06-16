@@ -138,3 +138,64 @@
   width: 100%;
   height: 100%;
 }
+
+/* =========================================================
+   Latest report layout update
+   适配学习报告页：指标卡片、图表区域、弱项列表和科目统计。
+   ========================================================= */
+
+.report-view {
+  width: 100%;
+}
+
+.report-card {
+  overflow: hidden;
+}
+
+.report-overview {
+  align-items: stretch;
+}
+
+.report-metric {
+  min-height: 96px;
+}
+
+.report-chart svg {
+  overflow: visible;
+}
+
+.report-list li:last-child {
+  border-bottom: none;
+}
+
+.report-loading,
+.report-empty {
+  padding: 12px 0;
+}
+
+@media (max-width: 1100px) {
+  .report-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .report-header h1 {
+    font-size: 30px;
+  }
+
+  .report-overview,
+  .report-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .report-list li {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .report-chart-box {
+    height: 240px;
+  }
+}

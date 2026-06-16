@@ -1,184 +1,100 @@
-from datetime import datetime
-
+from datetime import datetime, UTC
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.models.learner_state import LearnerState
 
 """
-学习者状态数据访问对象（DAO，Data Access Object），提供对学习者状态表的增删改查操作，包括创建学习者状态、根据ID查询学习者状态、根据用户ID和知识点ID查询学习者状态、查询所有学习者状态、删除学习者状态、更新或插入学习者状态等功能。
-学习者状态DAO的主要职责包括：
-1. 创建学习者状态
-2. 根据ID查询学习者状态
-3. 根据用户ID和知识点ID查询学习者状态
-4. 查询所有学习者状态
-5. 删除学习者状态
-6. 更新或插入学习者状态
+学习者状态 DAO，对应 learner_states 表。
+user_id + knowledge_id 唯一；记录 mastery、alpha、beta、confidence、attempts、correct_attempts、streak。
 """
+
 class LearnerStateDAO:
-
     @staticmethod
-    async def create_state(
-        db: AsyncSession,
-        user_id: int,
-        knowledge_id: int,
-        mastery: float | None = None,
-        alpha: float | None = None,
-        beta: float | None = None,
-        confidence: float | None = None,
-        attempts: int | None = None,
-        correct_attempts: int | None = None,
-        streak: int | None = None,
-        last_practiced_at: datetime | None = None
-    ) -> LearnerState:
-
-        data: dict[str, object] = {
-            "user_id": user_id,
-            "knowledge_id": knowledge_id,
-            "last_practiced_at": last_practiced_at
-        }
-
-        if mastery is not None:
-            data["mastery"] = mastery
-
-        if confidence is not None:
-            data["confidence"] = confidence
-
-        if attempts is not None:
-            data["attempts"] = attempts
-
-        if correct_attempts is not None:
-            data["correct_attempts"] = correct_attempts
-
-        if streak is not None:
-            data["streak"] = streak
-
+    async def create_state(db: AsyncSession, user_id: int, knowledge_id: int,
+                           mastery: float | None = None, alpha: float | None = None,
+                           beta: float | None = None, confidence: float | None = None,
+                           attempts: int | None = None, correct_attempts: int | None = None,
+                           streak: int | None = None,
+                           last_practiced_at: datetime | None = None) -> LearnerState:
+        data = {"user_id": user_id, "knowledge_id": knowledge_id}
+        for key, value in {
+            "mastery": mastery, "alpha": alpha, "beta": beta, "confidence": confidence,
+            "attempts": attempts, "correct_attempts": correct_attempts,
+            "streak": streak, "last_practiced_at": last_practiced_at,
+        }.items():
+            if value is not None:
+                data[key] = value
         state = LearnerState(**data)
-
         db.add(state)
-
         await db.commit()
-
         await db.refresh(state)
-
         return state
 
     @staticmethod
-    async def get_by_id(
-        db: AsyncSession,
-        state_id: int
-    ) -> LearnerState | None:
-
-        result = await db.execute(
-            select(LearnerState).where(
-                LearnerState.state_id == state_id
-            )
-        )
-
+    async def get_by_id(db: AsyncSession, state_id: int) -> LearnerState | None:
+        result = await db.execute(select(LearnerState).where(LearnerState.state_id == state_id))
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_by_user_knowledge(
-        db: AsyncSession,
-        user_id: int,
-        knowledge_id: int
-    ) -> LearnerState | None:
-
-        result = await db.execute(
-            select(LearnerState).where(
-                LearnerState.user_id == user_id,
-                LearnerState.knowledge_id == knowledge_id
-            )
-        )
-
+    async def get_by_user_knowledge(db: AsyncSession, user_id: int, knowledge_id: int) -> LearnerState | None:
+        result = await db.execute(select(LearnerState).where(
+            LearnerState.user_id == user_id,
+            LearnerState.knowledge_id == knowledge_id,
+        ))
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_all(
-        db: AsyncSession
-    ):
-
-        result = await db.execute(
-            select(LearnerState)
-        )
-
-        return result.scalars().all()
+    async def get_by_user_id(db: AsyncSession, user_id: int) -> list[LearnerState]:
+        result = await db.execute(select(LearnerState).where(LearnerState.user_id == user_id).order_by(LearnerState.knowledge_id.asc()))
+        return list(result.scalars().all())
 
     @staticmethod
-    async def delete_state(
-        db: AsyncSession,
-        state_id: int
-    ) -> bool:
+    async def get_all(db: AsyncSession) -> list[LearnerState]:
+        result = await db.execute(select(LearnerState).order_by(LearnerState.state_id.asc()))
+        return list(result.scalars().all())
 
-        state = await LearnerStateDAO.get_by_id(
-            db,
-            state_id
-        )
-
+    @staticmethod
+    async def update_state(db: AsyncSession, state_id: int, **kwargs) -> LearnerState | None:
+        state = await LearnerStateDAO.get_by_id(db, state_id)
         if not state:
-            return False
-
-        await db.delete(state)
-
+            return None
+        for key in ("mastery", "alpha", "beta", "confidence", "attempts",
+                    "correct_attempts", "streak", "last_practiced_at"):
+            if key in kwargs and kwargs[key] is not None:
+                setattr(state, key, kwargs[key])
+        state.updated_at = datetime.now(UTC)
         await db.commit()
+        await db.refresh(state)
+        return state
 
-        return True
-    
     @staticmethod
-    async def upsert_state(
-        db,
-        user_id,
-        knowledge_id,
-        mastery,
-        alpha,
-        beta,
-        confidence,
-        attempts,
-        correct_attempts,
-        streak,
-        last_practiced_at=None
-    ):
-        state = await LearnerStateDAO.get_by_user_knowledge(
-            db,
-            user_id,
-            knowledge_id
-        )
-
+    async def upsert_state(db: AsyncSession, user_id: int, knowledge_id: int, mastery: float,
+                           alpha: float, beta: float, confidence: float, attempts: int,
+                           correct_attempts: int, streak: int,
+                           last_practiced_at: datetime | None = None) -> LearnerState:
+        state = await LearnerStateDAO.get_by_user_knowledge(db, user_id, knowledge_id)
         if state:
             state.mastery = mastery
-            state.confidence = confidence
             state.alpha = alpha
             state.beta = beta
+            state.confidence = confidence
             state.attempts = attempts
             state.correct_attempts = correct_attempts
             state.streak = streak
             state.last_practiced_at = last_practiced_at
-
+            state.updated_at = datetime.now(UTC)
             await db.commit()
             await db.refresh(state)
-
             return state
+        return await LearnerStateDAO.create_state(db, user_id, knowledge_id, mastery, alpha, beta,
+                                                  confidence, attempts, correct_attempts, streak,
+                                                  last_practiced_at)
 
-        return await LearnerStateDAO.create_state(
-            db=db,
-            user_id=user_id,
-            knowledge_id=knowledge_id,
-            mastery=mastery,
-            alpha=alpha,
-            beta=beta,
-            confidence=confidence,
-            attempts=attempts,
-            correct_attempts=correct_attempts,
-            streak=streak,
-            last_practiced_at=last_practiced_at,
-        )
-    
     @staticmethod
-    async def get_by_user_id(db: AsyncSession, user_id: int):
-        result = await db.execute(
-            select(LearnerState).where(
-                LearnerState.user_id == user_id
-            )
-        )
-
-        return result.scalars().all()
+    async def delete_state(db: AsyncSession, state_id: int) -> bool:
+        state = await LearnerStateDAO.get_by_id(db, state_id)
+        if not state:
+            return False
+        await db.delete(state)
+        await db.commit()
+        return True

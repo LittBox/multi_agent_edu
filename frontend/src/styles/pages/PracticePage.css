@@ -133,3 +133,71 @@
 .practice-status {
   color: var(--text-sub-light);
 }
+
+/* =========================================================
+   Latest practice modal update
+   适配新版 PracticePage 的反馈、下一题和选项状态。
+   ========================================================= */
+
+.practice-option:disabled {
+  opacity: 0.78;
+  cursor: not-allowed;
+}
+
+.practice-option:not(:disabled):hover {
+  border-color: rgba(98, 244, 213, 0.36);
+  background: rgba(98, 244, 213, 0.08);
+}
+
+.practice-option.correct {
+  border-color: rgba(98, 244, 213, 0.5);
+  background: rgba(98, 244, 213, 0.16);
+}
+
+.practice-option.wrong {
+  border-color: rgba(255, 143, 159, 0.5);
+  background: rgba(255, 143, 159, 0.12);
+}
+
+.practice-actions {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.practice-actions button.secondary {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+}
+
+.practice-feedback {
+  margin-top: 18px;
+}
+
+@media (max-width: 640px) {
+  .practice-overlay {
+    padding: 12px;
+  }
+
+  .practice-modal {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .practice-header {
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .practice-stem {
+    font-size: 16px;
+  }
+
+  .practice-actions {
+    justify-content: stretch;
+  }
+
+  .practice-actions button {
+    flex: 1 1 100%;
+  }
+}

@@ -1,62 +1,47 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import AuthCarousel from "../components/AuthCarousel/AuthCarousel";
-import GhostMouse from "../components/GhostMouse/GhostMouse";
+import LoginFormPage from "./LoginFormPage";
+import DashboardPage from "./DashboardPage";
+import { useAuthStore } from "../stores/AuthStore";
 
-interface AuthPageProps {
-  onLogin?: () => void;
-}
+export default function AuthPage() {
+  const page = useAuthStore((state) => state.page);
+  const user = useAuthStore((state) => state.user);
+  const loading = useAuthStore((state) => state.loading);
+  const initAuth = useAuthStore((state) => state.initAuth);
+  const goLogin = useAuthStore((state) => state.goLogin);
 
-const AuthPage: React.FC<AuthPageProps> = () => {
-  const navigate = useNavigate();
+  useEffect(() => {
+    void initAuth();
+  }, [initAuth]);
+
+  if (loading) {
+    return (
+      <div className="app-loading">
+        正在加载系统...
+      </div>
+    );
+  }
+
+  if (user || page === "home") {
+    return <DashboardPage />;
+  }
+
+  if (page === "login") {
+    return <LoginFormPage />;
+  }
 
   return (
-    <div style={{ minHeight: "100vh", position: "relative" }}>
-      <GhostMouse />
+    <div className="auth-page">
+      <AuthCarousel />
 
-      <header
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "64px",
-          display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "center",
-          padding: "0 2rem",
-          zIndex: 10,
-          pointerEvents: "none",
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => navigate("/login")}
-          style={{
-            pointerEvents: "auto",
-            padding: "0.6rem 1.2rem",
-            borderRadius: "999px",
-            border: "1px solid rgba(0,0,0,0.12)",
-            background: "rgba(255,255,255,0.8)",
-            backdropFilter: "blur(8px)",
-            cursor: "pointer",
-          }}
-        >
-          Login
+      <div className="auth-entry-panel">
+        <h1>智能学习系统</h1>
+        <p>请选择身份并登录，进入课程、知识点、作业与考试中心。</p>
+        <button type="button" onClick={goLogin}>
+          进入登录
         </button>
-      </header>
-
-      <main
-        style={{
-          minHeight: "100vh",
-          display: "grid",
-          placeContent: "center",
-          overflow: "visible",
-        }}
-      >
-        <AuthCarousel />
-      </main>
+      </div>
     </div>
   );
-};
-
-export default AuthPage;
+}

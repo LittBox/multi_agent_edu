@@ -1,206 +1,144 @@
+"""学生选课服务。
+
+本服务直接对应学生选课前端：
+- list_available_classes：上方公开课程卡片
+- list_my_enrollments：下方我已选择课程卡片
+- enroll_student：加入课程
+- drop_student：退课
+"""
+from datetime import datetime, UTC
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import date, time
+
+from app.dao.courseDao import CourseDAO
 from app.dao.enrollmentDao import CourseEnrollmentDAO
 from app.dao.studentDao import StudentDAO
+from app.dao.teacherDao import TeacherDAO
 from app.dao.teachingClassDao import TeachingClassDAO
-from app.dao.courseDao import CourseDAO
+from app.services._helpers import teaching_class_to_dict, enrollment_to_dict
 
-"""
-选课服务类，主要职责包括：
-1. 学生选课
-2. 检查选课时间冲突
-3. 学生退课
-4. 获取可选课程列表
-5. 获取学生已选课程列表
-"""
+
 class EnrollmentService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
     @staticmethod
-    def _times_overlap(start1: time, end1: time, start2: time, end2: time) -> bool:
+    def _normalize_schedule(item: dict) -> dict:
+        weekday = item.get("weekday", item.get("day"))
+        start_time = item.get("start_time")
+        end_time = item.get("end_time")
+        if (not start_time or not end_time) and item.get("time"):
+            parts = str(item["time"]).split("-")
+            if len(parts) == 2:
+                start_time, end_time = parts[0].strip(), parts[1].strip()
+        return {"weekday": weekday, "start_time": str(start_time), "end_time": str(end_time)}
+
+    @staticmethod
+    def _times_overlap(start1: str, end1: str, start2: str, end2: str) -> bool:
         return start1 < end2 and start2 < end1
 
     @staticmethod
     def _weeks_overlap(start1: int, end1: int, start2: int, end2: int) -> bool:
         return start1 <= end2 and start2 <= end1
 
-    async def _check_time_conflict(
-        self,
-        student_id: int,
-        new_schedules: list,
-    ) -> bool:
-        enrolled_classes = await CourseEnrollmentDAO.get_by_student(
-            self.db, student_id, "enrolled"
-        )
-
-        for enrollment in enrolled_classes:
-            existing_class = await TeachingClassDAO.get_by_id(
-                self.db, enrollment.class_id
-            )
-            if not existing_class:
+    async def _check_time_conflict(self, student_id: int, new_class) -> bool:
+        enrollments = await CourseEnrollmentDAO.get_by_student(self.db, student_id, status="enrolled")
+        for e in enrollments:
+            old_class = await TeachingClassDAO.get_by_id(self.db, e.class_id)
+            if not old_class:
                 continue
-
-            existing_schedules = existing_class.schedules or []
-
-            for existing_sched in existing_schedules:
-                for new_sched in new_schedules:
-                    if (
-                        existing_sched.get("weekday") == new_sched.get("weekday")
-                        and self._weeks_overlap(
-                            existing_sched.get("week_start"),
-                            existing_sched.get("week_end"),
-                            new_sched.get("week_start"),
-                            new_sched.get("week_end"),
-                        )
-                        and self._times_overlap(
-                            existing_sched.get("start_time"),
-                            existing_sched.get("end_time"),
-                            new_sched.get("start_time"),
-                            new_sched.get("end_time"),
-                        )
+            if not self._weeks_overlap(old_class.start_week, old_class.end_week, new_class.start_week, new_class.end_week):
+                continue
+            for old_s in old_class.schedules or []:
+                old_norm = self._normalize_schedule(old_s)
+                for new_s in new_class.schedules or []:
+                    new_norm = self._normalize_schedule(new_s)
+                    if old_norm["weekday"] == new_norm["weekday"] and self._times_overlap(
+                        old_norm["start_time"], old_norm["end_time"], new_norm["start_time"], new_norm["end_time"]
                     ):
                         return True
         return False
 
-    """
-    选课流程：
-    1. 验证学生和教学班的存在性。
-    2. 检查教学班是否开放选课，是否已满员。
-    3. 检查学生是否已选该教学班，或已选同一课程的其他教学班。
-    4. 检查选课时间是否在课程开始前，且没有与已选课程的时间冲突。
-    5. 创建选课记录，并更新教学班的当前人数。
-    6. 返回选课结果。
-    """
-    async def enroll_student(self, student_id: int, class_id: int):
+    async def enroll_student(self, student_id: int, class_id: int) -> dict:
         student = await StudentDAO.get_by_id(self.db, student_id)
         if not student:
             raise ValueError("Student not found")
-
-        teaching_class = await TeachingClassDAO.get_by_id(self.db, class_id)
-        if not teaching_class:
+        tc = await TeachingClassDAO.get_by_id(self.db, class_id)
+        if not tc:
             raise ValueError("Teaching class not found")
-
-        #检查教学班状态和容量，如果教学班不开放选课或者已满员，则拒绝选课请求
-        if teaching_class.status != "open":
+        if tc.status != "open":
             raise ValueError("Class is not open for enrollment")
-
-        if teaching_class.current_count >= teaching_class.capacity:
+        if tc.current_count >= tc.capacity:
             raise ValueError("Class is full")
-
-        already_enrolled = await CourseEnrollmentDAO.get_active_enrollment(
-            self.db, student_id, class_id
-        )
-        if already_enrolled:
+        if await CourseEnrollmentDAO.get_active_enrollment(self.db, student_id, class_id):
             raise ValueError("Student already enrolled in this class")
-
-        other_enrollments = await CourseEnrollmentDAO.get_by_student(
-            self.db, student_id, "enrolled"
-        )
-        for enrollment in other_enrollments:
-            other_class = await TeachingClassDAO.get_by_id(self.db, enrollment.class_id)
-            if other_class and other_class.course_id == teaching_class.course_id:
+        for e in await CourseEnrollmentDAO.get_by_student(self.db, student_id, status="enrolled"):
+            other = await TeachingClassDAO.get_by_id(self.db, e.class_id)
+            if other and other.course_id == tc.course_id:
                 raise ValueError("Student already enrolled in another class of the same course")
-
-        today = date.today()
-        if today >= teaching_class.start_date:
-            raise ValueError("Cannot enroll after course start date")
-
-        new_schedules = await ClassScheduleDAO.get_by_class(self.db, class_id)
-        if await self._check_time_conflict(student_id, new_schedules):
+        if await self._check_time_conflict(student_id, tc):
             raise ValueError("Student has time conflict with other enrolled classes")
-
-        enrollment = await CourseEnrollmentDAO.create_enrollment(
-            self.db, class_id, student_id
-        )
-
+        enrollment = await CourseEnrollmentDAO.create_enrollment(self.db, class_id, student_id)
         await TeachingClassDAO.increment_count(self.db, class_id)
+        course = await CourseDAO.get_by_id(self.db, tc.course_id)
+        teacher = await TeacherDAO.get_by_id(self.db, tc.teacher_id)
+        return enrollment_to_dict(enrollment, tc=tc, course=course, teacher=teacher)
 
-        return enrollment
+    async def enroll_by_user(self, user_id: int, class_id: int) -> dict:
+        student = await StudentDAO.get_by_user_id(self.db, user_id)
+        if not student:
+            raise ValueError("Student profile not found for current user")
+        return await self.enroll_student(student.student_id, class_id)
 
-    async def drop_student(self, enrollment_id: int, student_id: int):
+    async def drop_student(self, enrollment_id: int, student_id: int,
+                           drop_reason: str | None = "学生主动退课") -> dict:
         enrollment = await CourseEnrollmentDAO.get_by_id(self.db, enrollment_id)
         if not enrollment:
             raise ValueError("Enrollment not found")
-
         if enrollment.student_id != student_id:
             raise ValueError("Can only drop your own enrollment")
-
         if enrollment.enroll_status != "enrolled":
-            raise ValueError("Can only drop active enrollments")
-
-        teaching_class = await TeachingClassDAO.get_by_id(self.db, enrollment.class_id)
-        if not teaching_class:
-            raise ValueError("Teaching class not found")
-
-        today = date.today()
-        if today >= teaching_class.start_date:
-            raise ValueError("Cannot drop after course start date")
-
-        await CourseEnrollmentDAO.update_status(
-            self.db, enrollment_id, "dropped", "Student withdrew"
-        )
-
+            raise ValueError("Enrollment is not active")
+        updated = await CourseEnrollmentDAO.drop_enrollment(self.db, enrollment_id, drop_reason=drop_reason)
         await TeachingClassDAO.decrement_count(self.db, enrollment.class_id)
+        tc = await TeachingClassDAO.get_by_id(self.db, updated.class_id)
+        course = await CourseDAO.get_by_id(self.db, tc.course_id) if tc else None
+        teacher = await TeacherDAO.get_by_id(self.db, tc.teacher_id) if tc else None
+        return enrollment_to_dict(updated, tc=tc, course=course, teacher=teacher)
 
-        return {"message": "Successfully dropped from class"}
-
-    async def get_available_classes(self, student_id: int, semester: str | None = None):
-        student = await StudentDAO.get_by_id(self.db, student_id)
+    async def drop_by_user(self, user_id: int, enrollment_id: int,
+                           drop_reason: str | None = "学生主动退课") -> dict:
+        student = await StudentDAO.get_by_user_id(self.db, user_id)
         if not student:
-            raise ValueError("Student not found")
+            raise ValueError("Student profile not found for current user")
+        return await self.drop_student(enrollment_id, student.student_id, drop_reason)
 
-        open_classes = await TeachingClassDAO.get_all_open(self.db)
+    async def list_available_classes(self) -> list[dict]:
+        rows = await TeachingClassDAO.get_all_open(self.db)
+        result = []
+        for tc in rows:
+            course = await CourseDAO.get_by_id(self.db, tc.course_id)
+            teacher = await TeacherDAO.get_by_id(self.db, tc.teacher_id)
+            result.append(teaching_class_to_dict(tc, course=course, teacher=teacher))
+        return result
 
-        available = []
-        for teaching_class in open_classes:
-            if semester and teaching_class.semester != semester:
-                continue
-
-            if teaching_class.current_count >= teaching_class.capacity:
-                continue
-
-            already_enrolled = await CourseEnrollmentDAO.get_active_enrollment(
-                self.db, student_id, teaching_class.class_id
-            )
-            if already_enrolled:
-                continue
-
-            other_enrollments = await CourseEnrollmentDAO.get_by_student(
-                self.db, student_id, "enrolled"
-            )
-            has_same_course = False
-            for enrollment in other_enrollments:
-                other_class = await TeachingClassDAO.get_by_id(
-                    self.db, enrollment.class_id
-                )
-                if (
-                    other_class
-                    and other_class.course_id == teaching_class.course_id
-                ):
-                    has_same_course = True
-                    break
-
-            if has_same_course:
-                continue
-
-            today = date.today()
-            if today >= teaching_class.start_date:
-                continue
-
-            new_schedules = await ClassScheduleDAO.get_by_class(
-                self.db, teaching_class.class_id
-            )
-            if await self._check_time_conflict(student_id, new_schedules):
-                continue
-
-            available.append(teaching_class)
-
-        return available
-
-    async def get_student_classes(self, student_id: int, status: str = "enrolled"):
-        student = await StudentDAO.get_by_id(self.db, student_id)
+    async def list_my_enrollments(self, user_id: int, status: str | None = "enrolled") -> list[dict]:
+        student = await StudentDAO.get_by_user_id(self.db, user_id)
         if not student:
-            raise ValueError("Student not found")
+            raise ValueError("Student profile not found for current user")
+        enrollments = await CourseEnrollmentDAO.get_by_student(self.db, student.student_id, status=status)
+        result = []
+        for e in enrollments:
+            tc = await TeachingClassDAO.get_by_id(self.db, e.class_id)
+            course = await CourseDAO.get_by_id(self.db, tc.course_id) if tc else None
+            teacher = await TeacherDAO.get_by_id(self.db, tc.teacher_id) if tc else None
+            result.append(enrollment_to_dict(e, tc=tc, course=course, teacher=teacher))
+        return result
 
-        return await CourseEnrollmentDAO.get_by_student(self.db, student_id, status)
+    async def update_score(self, enrollment_id: int, course_score: float | None) -> dict:
+        if course_score is not None and not (0 <= course_score <= 100):
+            raise ValueError("Course score must be between 0 and 100")
+        enrollment = await CourseEnrollmentDAO.update_score(self.db, enrollment_id, course_score)
+        if not enrollment:
+            raise ValueError("Enrollment not found")
+        return enrollment_to_dict(enrollment)

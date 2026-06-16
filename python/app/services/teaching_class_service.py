@@ -1,267 +1,183 @@
+"""教学班服务。
+
+前端选课页面依赖教学班返回 course_name、teacher_name、容量、周次、地点、schedules 等字段。
+"""
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import date, time
-from app.dao.teachingClassDao import TeachingClassDAO
+
 from app.dao.courseDao import CourseDAO
 from app.dao.teacherDao import TeacherDAO
+from app.dao.teachingClassDao import TeachingClassDAO
 from app.dao.enrollmentDao import CourseEnrollmentDAO
+from app.dao.studentDao import StudentDAO
+from app.services._helpers import teaching_class_to_dict, enrollment_to_dict, student_to_dict
 
-"""
-教学班服务类，提供与教学班相关的业务逻辑处理，包括创建教学班、查询教学班信息、更新教学班信息、关闭教学班等功能。
-教学班服务类的主要职责包括：
-1. 创建教学班：根据课程ID、教师ID、学期、班级名称、容量、上课日期等信息创建新的教学班，并检查教师的时间安排是否有冲突。
-2. 查询教学班信息：根据教学班ID查询教学班的详细信息，包括所属课程、授课教师、学期、班级名称、容量、当前人数、上课时间安排等信息。
-3. 更新教学班信息：根据教学班ID更新教学班的相关信息，例如修改班级名称、调整容量、变更上课日期等，并检查更新后的信息是否合理。
-4. 关闭教学班：根据教学班ID和教师ID关闭教学班，只有授课教师可以关闭教学班，并且只能关闭状态为“open”的教学班。
-5. 获取教学班学生列表：根据教学班ID获取已选该教学班的学生列表，包括学生ID、姓名、学号等信息。
-教学班服务类通过调用数据访问对象（DAO）来与数据库进行交互，确保业务逻辑的正确性和数据的一致性。同时，教学班服务类还负责处理业务逻辑中的各种异常情况，例如教师时间冲突、教学班不存在、容量不足等，并返回相应的错误信息给调用方。
-"""
+
 class TeachingClassService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    """
-    查看老师安排是否有冲突的选课时间
-    1. 获取老师在该学期的所有教学班。
-    2. 获取每个教学班的上课时间安排。
-    3. 对比新教学班的上课时间安排与现有教学班的上课时间安排，检查是否有时间冲突。
-    4. 如果有冲突，返回冲突信息；如果没有冲突，允许创建新的教学班。
-    """
-    async def _check_teacher_schedule_conflict(
-        self,
-        teacher_id: int,
-        semester: str,
-        schedules: list,
-        start_week: int,
-        end_week: int,
-    ) -> bool:
-        existing_classes = await TeachingClassDAO.get_by_teacher_semester(
-            self.db,
-            teacher_id,
-            semester,
-        )
+    @staticmethod
+    def _normalize_schedule(item: dict) -> dict:
+        """兼容前端可能传入的不同排课字段。
 
-        for existing_class in existing_classes:
-            if existing_class.status not in ("open", "closed"):
-                continue
+        推荐格式：{"weekday": 1, "start_time": "08:00", "end_time": "09:40"}
+        旧格式：{"day": 1, "time": "08:00-09:40"}
+        """
+        if not isinstance(item, dict):
+            raise ValueError("Each schedule must be an object")
+        weekday = item.get("weekday", item.get("day"))
+        start_time = item.get("start_time")
+        end_time = item.get("end_time")
+        if (not start_time or not end_time) and item.get("time"):
+            parts = str(item["time"]).split("-")
+            if len(parts) == 2:
+                start_time, end_time = parts[0].strip(), parts[1].strip()
+        if weekday is None or not start_time or not end_time:
+            raise ValueError("Schedule must include weekday/start_time/end_time")
+        return {"weekday": int(weekday), "start_time": str(start_time), "end_time": str(end_time)}
 
-            if not self._weeks_overlap(
-                existing_class.start_week,
-                existing_class.end_week,
-                start_week,
-                end_week,
-            ):
-                continue
-
-            existing_schedules = existing_class.schedules or []
-
-            for existing_sched in existing_schedules:
-                for new_sched in schedules:
-                    if existing_sched.get("day") != new_sched.get("day"):
-                        continue
-
-                    old_time = existing_sched.get("time")
-                    new_time = new_sched.get("time")
-
-                    if old_time and new_time and self._times_overlap(old_time, new_time):
-                        return True
-
-        return False
-    #静态方法用于检查两个时间段是否重叠，两个时间段重叠的条件是：
-    #第一个时间段的开始时间早于第二个时间段的结束时间，并且第二个时间段的开始时间早于第一个时间段的结束时间
     @staticmethod
     def _weeks_overlap(start1: int, end1: int, start2: int, end2: int) -> bool:
         return start1 <= end2 and start2 <= end1
 
-    #静态方法用于检查两个时间段是否重叠，两个时间段重叠的条件是：
-    #第一个时间段的开始时间早于第二个时间段的结束时间，并且第二个时间段的开始时间早于第一个时间段的结束时间
     @staticmethod
-    def _times_overlap(time_range1: str, time_range2: str) -> bool:
-        start1, end1 = time_range1.split("-")
-        start2, end2 = time_range2.split("-")
-
-        start1 = start1.strip()
-        end1 = end1.strip()
-        start2 = start2.strip()
-        end2 = end2.strip()
-
+    def _times_overlap(start1: str, end1: str, start2: str, end2: str) -> bool:
         return start1 < end2 and start2 < end1
-    
-    """
-    创建教学班
-    1. 验证教师和课程的存在性。
-    2. 验证教学班容量和上课日期的合理性。
-    3. 检查教师的时间安排是否有冲突。
-    4. 创建教学班记录，并返回创建结果。
-    """
-    async def create_teaching_class(
-        self,
-        course_id: int,
-        teacher_id: int,
-        semester: str,
-        class_name: str,
-        capacity: int,
-        start_week: int,
-        end_week: int,
-        schedules: list,
-        location: str | None = None,
-    ):
-        teacher = await TeacherDAO.get_by_id(self.db, teacher_id)
-        if not teacher:
-            raise ValueError("Teacher not found")
 
+    async def _check_teacher_schedule_conflict(self, teacher_id: int, semester: str,
+                                               schedules: list[dict], start_week: int,
+                                               end_week: int, exclude_class_id: int | None = None) -> bool:
+        existing_classes = await TeachingClassDAO.get_by_teacher(self.db, teacher_id)
+        for old in existing_classes:
+            if exclude_class_id and old.class_id == exclude_class_id:
+                continue
+            if old.semester != semester or old.status not in {"open", "closed"}:
+                continue
+            if not self._weeks_overlap(old.start_week, old.end_week, start_week, end_week):
+                continue
+            for old_s in old.schedules or []:
+                old_norm = self._normalize_schedule(old_s)
+                for new_s in schedules:
+                    if old_norm["weekday"] == new_s["weekday"] and self._times_overlap(
+                        old_norm["start_time"], old_norm["end_time"], new_s["start_time"], new_s["end_time"]
+                    ):
+                        return True
+        return False
+
+    async def create_teaching_class(self, course_id: int, teacher_id: int, semester: str,
+                                    class_name: str, capacity: int, start_week: int,
+                                    end_week: int, schedules: list[dict],
+                                    location: str | None = None, status: str = "open") -> dict:
+        if status not in {"open", "closed", "cancelled", "finished"}:
+            raise ValueError("Invalid class status")
+        if capacity <= 0:
+            raise ValueError("Capacity must be greater than 0")
+        if start_week <= 0 or end_week < start_week:
+            raise ValueError("Invalid week range")
         course = await CourseDAO.get_by_id(self.db, course_id)
         if not course:
             raise ValueError("Course not found")
-
-        if capacity <= 0:
-            raise ValueError("Capacity must be greater than 0")
-
-        if start_week <= 0:
-            raise ValueError("Start week must be positive")
-
-        if end_week < start_week:
-            raise ValueError("End week must be greater than or equal to start week")
-
-        if not isinstance(schedules, list) or len(schedules) == 0:
+        teacher = await TeacherDAO.get_by_id(self.db, teacher_id)
+        if not teacher:
+            raise ValueError("Teacher not found")
+        normalized = [self._normalize_schedule(item) for item in (schedules or [])]
+        if not normalized:
             raise ValueError("Schedules must be a non-empty list")
-
-        for sched in schedules:
-            if not isinstance(sched, dict):
-                raise ValueError("Each schedule must be an object")
-            if "day" not in sched:
-                raise ValueError("Each schedule must include day")
-            if "time" not in sched:
-                raise ValueError("Each schedule must include time")
-            if "-" not in sched["time"]:
-                raise ValueError("Schedule time must be like '10:00-11:00'")
-
-        if await self._check_teacher_schedule_conflict(
-            teacher_id=teacher_id,
-            semester=semester,
-            schedules=schedules,
-            start_week=start_week,
-            end_week=end_week,
-        ):
+        if await self._check_teacher_schedule_conflict(teacher_id, semester, normalized, start_week, end_week):
             raise ValueError("Teacher has schedule conflict")
-
-        teaching_class = await TeachingClassDAO.create_class(
+        tc = await TeachingClassDAO.create_class(
             self.db,
             course_id=course_id,
             teacher_id=teacher_id,
             semester=semester,
+            schedules=normalized,
             class_name=class_name,
             capacity=capacity,
             start_week=start_week,
             end_week=end_week,
             location=location,
-            schedules=schedules,
+            status=status,
         )
+        return teaching_class_to_dict(tc, course=course, teacher=teacher)
 
-        return teaching_class
-    
-    """
-    根据教学班ID查询教学班信息
-    """
-    async def get_teaching_class(self, class_id: int):
-        teaching_class = await TeachingClassDAO.get_by_id(self.db, class_id)
-        if not teaching_class:
+    async def get_teaching_class(self, class_id: int) -> dict:
+        tc = await TeachingClassDAO.get_by_id(self.db, class_id)
+        if not tc:
             raise ValueError("Teaching class not found")
-        return teaching_class
+        course = await CourseDAO.get_by_id(self.db, tc.course_id)
+        teacher = await TeacherDAO.get_by_id(self.db, tc.teacher_id)
+        return teaching_class_to_dict(tc, course=course, teacher=teacher)
 
-    """
-    获取所有教学班信息，包括：
-        1. 教学班ID
-        2. 所属课程ID和课程名称
-        3. 授课教师ID和教师姓名
-        4. 学期
-        5. 班级名称
-        6. 教学班容量
-        7. 当前选课人数
-        8. 上课时间安排（包括星期几、开始时间、结束时间、上课地点、上课周数等信息）
-    """
-    async def get_all_classes(self):
-        return await TeachingClassDAO.get_all(self.db)
+    async def list_classes(self, status: str | None = None, semester: str | None = None,
+                           teacher_id: int | None = None, course_id: int | None = None) -> list[dict]:
+        if teacher_id is not None:
+            rows = await TeachingClassDAO.get_by_teacher(self.db, teacher_id, status=status)
+        elif course_id is not None:
+            rows = await TeachingClassDAO.get_by_course(self.db, course_id, status=status)
+        elif semester is not None:
+            rows = await TeachingClassDAO.get_by_semester(self.db, semester, status=status)
+        else:
+            rows = await TeachingClassDAO.get_all(self.db, status=status)
+        result = []
+        for tc in rows:
+            course = await CourseDAO.get_by_id(self.db, tc.course_id)
+            teacher = await TeacherDAO.get_by_id(self.db, tc.teacher_id)
+            result.append(teaching_class_to_dict(tc, course=course, teacher=teacher))
+        return result
 
+    async def list_available_classes(self) -> list[dict]:
+        return await self.list_classes(status="open")
 
-    """
-    根据教学班id查询教学班日常安排信息，包括：
-    1. 上课的星期几    2. 上课的开始时间和结束时间
-    3. 上课地点    4. 上课周数  
-    """
-    async def get_class_schedules(self, class_id: int):
-        return await ClassScheduleDAO.get_by_class(self.db, class_id)
-
-    """
-    根据教师ID和学期查询教师的教学班信息，
-    返回该教师在指定学期的所有教学班列表，包括：
-    教学班ID、课程名称、班级名称、容量、当前人数、上课时间安排等信息。
-    """
-    async def get_teacher_classes(self, teacher_id: int, semester: str | None = None):
-        if semester:
-            return await TeachingClassDAO.get_by_teacher_semester(
-                self.db, teacher_id, semester
-            )
-        return await TeachingClassDAO.get_by_teacher(self.db, teacher_id)
-
-    
-    """
-    关闭教学班，只有授课教师可以关闭教学班，并且只能关闭状态为“open”的教学班。
-    1. 验证教学班的存在性。
-    2. 验证教师的权限。
-    3. 验证教学班的状态。
-    4. 更新教学班状态为“closed”，并返回操作结果。
-    """
-    async def close_class(self, class_id: int, teacher_id: int):
-        teaching_class = await TeachingClassDAO.get_by_id(self.db, class_id)
-        if not teaching_class:
+    async def update_teaching_class(self, class_id: int, **kwargs) -> dict:
+        tc = await TeachingClassDAO.get_by_id(self.db, class_id)
+        if not tc:
             raise ValueError("Teaching class not found")
+        allowed = {"course_id", "teacher_id", "semester", "class_name", "capacity", "location", "start_week", "end_week", "status", "schedules"}
+        data = {k: v for k, v in kwargs.items() if k in allowed and v is not None}
+        new_capacity = data.get("capacity", tc.capacity)
+        start_week = data.get("start_week", tc.start_week)
+        end_week = data.get("end_week", tc.end_week)
+        if new_capacity <= 0 or new_capacity < tc.current_count:
+            raise ValueError("Invalid capacity")
+        if start_week <= 0 or end_week < start_week:
+            raise ValueError("Invalid week range")
+        if "status" in data and data["status"] not in {"open", "closed", "cancelled", "finished"}:
+            raise ValueError("Invalid class status")
+        if "schedules" in data:
+            data["schedules"] = [self._normalize_schedule(item) for item in data["schedules"]]
+        check_schedules = data.get("schedules", tc.schedules or [])
+        if await self._check_teacher_schedule_conflict(data.get("teacher_id", tc.teacher_id), data.get("semester", tc.semester),
+                                                       check_schedules, start_week, end_week, exclude_class_id=class_id):
+            raise ValueError("Teacher has schedule conflict")
+        updated = await TeachingClassDAO.update_class(self.db, class_id, **data)
+        course = await CourseDAO.get_by_id(self.db, updated.course_id)
+        teacher = await TeacherDAO.get_by_id(self.db, updated.teacher_id)
+        return teaching_class_to_dict(updated, course=course, teacher=teacher)
 
-        if teaching_class.teacher_id != teacher_id:
-            raise ValueError("Only the assigned teacher can close this class")
-
-        if teaching_class.status != "open":
-            raise ValueError("Only open classes can be closed")
-
-        await TeachingClassDAO.update_status(self.db, class_id, "closed")
-        return {"message": "Class closed successfully"}
-
-
-    """
-    根据教学班id更新教学班信息，例如修改班级名称、调整容量、变更上课日期等，并检查更新后的信息是否合理。
-    1. 验证教学班的存在性。
-    2. 验证更新后的容量和上课日期的合理性。
-    3. 更新教学班记录，并返回更新结果。
-    """
-    async def update_teaching_class(self, class_id: int, **kwargs):
-        teaching_class = await TeachingClassDAO.get_by_id(self.db, class_id)
-        if not teaching_class:
+    async def update_status(self, class_id: int, status: str) -> dict:
+        if status not in {"open", "closed", "cancelled", "finished"}:
+            raise ValueError("Invalid class status")
+        tc = await TeachingClassDAO.update_status(self.db, class_id, status)
+        if not tc:
             raise ValueError("Teaching class not found")
+        return await self.get_teaching_class(class_id)
 
-        capacity = kwargs.get("capacity")
-        if capacity is not None:
-            if capacity <= 0:
-                raise ValueError("Capacity must be greater than 0")
-            if capacity < teaching_class.current_count:
-                raise ValueError("Capacity cannot be lower than current enrollment")
-
-        start_week = kwargs.get("start_week", teaching_class.start_week)
-        end_week = kwargs.get("end_week", teaching_class.end_week)
-        if start_week is not None and start_week <= 0:
-            raise ValueError("Start week must be positive")
-        if start_week is not None and end_week is not None and end_week < start_week:
-            raise ValueError("End week must be greater than or equal to start week")
-
-        updated = await TeachingClassDAO.update_class(self.db, class_id, **kwargs)
-        if not updated:
+    async def delete_class(self, class_id: int) -> bool:
+        ok = await TeachingClassDAO.soft_delete(self.db, class_id)
+        if not ok:
             raise ValueError("Teaching class not found")
-        return updated
+        return ok
 
-    """
-    根据教学班id查询该教学班的所有学生信息。
-    """
-    async def get_class_students(self, class_id: int):
-        teaching_class = await TeachingClassDAO.get_by_id(self.db, class_id)
-        if not teaching_class:
+    async def get_class_students(self, class_id: int) -> list[dict]:
+        tc = await TeachingClassDAO.get_by_id(self.db, class_id)
+        if not tc:
             raise ValueError("Teaching class not found")
-
-        return await CourseEnrollmentDAO.get_by_class(self.db, class_id)
+        enrollments = await CourseEnrollmentDAO.get_by_class(self.db, class_id, status="enrolled")
+        result = []
+        for e in enrollments:
+            student = await StudentDAO.get_by_id(self.db, e.student_id)
+            if student:
+                item = student_to_dict(student)
+                item.update(enrollment_to_dict(e))
+                result.append(item)
+        return result

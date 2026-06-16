@@ -1,19 +1,34 @@
-from app.db.base import Base
-from sqlalchemy import String, ForeignKey, Integer
+from __future__ import annotations
+
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.db.base import Base
 
-"""
-用户角色关联表
-"""
+
 class UserRole(Base):
+    """
+    用户角色关联表。
+
+    当前设计是一个用户只绑定一个角色，因此 user_id 设置为唯一。
+    如果未来需要一个用户拥有多个角色，可以去掉 user_id 的 unique 约束，
+    改用 UniqueConstraint(user_id, role_id)。
+    """
+
     __tablename__ = "user_roles"
 
+    # 关联表主键，自增。
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    #这里的users.user_id里的users是数据库的表名，而不是模型类名User。因为在定义User模型时，__tablename__属性被设置为"users"，所以在ForeignKey中引用时需要使用表名而不是模型类名。
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), unique=True, nullable=False)
+
+    # 关联 users.user_id。
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), nullable=False)
+
+    # 关联 roles.role_id。
     role_id: Mapped[int] = mapped_column(ForeignKey("roles.role_id"), nullable=False)
 
-    #对象层级关系映射，通过relationship函数建立与User模型的关系，使得在查询UserRole对象时，可以方便地访问关联的User对象
-    user = relationship("User")
-    role = relationship("Role")
+    user = relationship("User", back_populates="user_role")
+    role = relationship("Role", back_populates="user_roles")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_user_role_user"),
+    )

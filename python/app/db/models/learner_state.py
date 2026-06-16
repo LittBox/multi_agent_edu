@@ -1,48 +1,58 @@
-from datetime import datetime, UTC
+from __future__ import annotations
 
-from sqlalchemy import DateTime, ForeignKey, Float, Integer, UniqueConstraint
+from datetime import UTC, datetime
+
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
-#学习者状态表，记录每个学生在每个知识点上的掌握情况，包括掌握度、练习次数、正确次数、连续正确次数等信息
+
 class LearnerState(Base):
+    """
+    学习者知识点状态表。
+
+    用于记录每个用户在每个知识点上的掌握情况，包括掌握度、练习次数、正确次数、连续正确次数等。
+    user_id 关联 users.user_id，不是 students.student_id。
+    """
+
     __tablename__ = "learner_states"
 
+    # 学习状态主键，自增。
     state_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
+    # 用户 ID，关联 users.user_id。
     user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), nullable=False)
+
+    # 知识点 ID。
     knowledge_id: Mapped[int] = mapped_column(
         ForeignKey("knowledge_points.knowledge_id"),
         nullable=False,
     )
 
-    """
-    mastery，表示掌握度，初始值为0.2，每次练习后根据表现进行调整
-    alpha，表示学习率，初始值为1.0，影响掌握度的更新速度
-    beta，表示遗忘率，初始值为9.0，影响掌握度的遗忘速度
-    """
+    # 掌握度，通常范围 0~1。
     mastery: Mapped[float] = mapped_column(Float, default=0.2, nullable=False)
 
+    # 学习率，影响掌握度更新速度。
     alpha: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
+
+    # 遗忘率，影响遗忘模型。
     beta: Mapped[float] = mapped_column(Float, default=9.0, nullable=False)
 
-    """
-    confidence，表示置信度，随着练习次数增加而增加，初始值为0.0，每次练习后根据表现进行调整
-    attempts，表示练习次数，初始值为0，每次练习后加1
-    correct_attempts，表示正确次数，初始值为0，每次练习正确后加1
-    streak，表示连续正确次数，初始值为0，每次练习正确后加1，每次练习错误后重置为0
-    """
+    # 置信度，随着练习次数增加而提升。
     confidence: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
 
+    # 总练习次数。
     attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    # 正确次数。
     correct_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    # 连续正确次数。
     streak: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    last_practiced_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
+    # 最近一次练习时间。
+    last_practiced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -52,7 +62,7 @@ class LearnerState(Base):
     )
 
     user = relationship("User")
-    knowledge_point = relationship("KnowledgePoint")
+    knowledge_point = relationship("KnowledgePoint", back_populates="learner_states")
 
     __table_args__ = (
         UniqueConstraint("user_id", "knowledge_id", name="uq_user_knowledge_state"),

@@ -1,140 +1,78 @@
 import { useState } from "react";
-import { useAuthStore } from "../stores/AuthStore";
-import { register as apiRegister } from "../api/auth";
+import { useAuthStore } from "../stores";
+import type { UserRole } from "../api/auth";
 import "../styles/pages/LoginFormPage.css";
-import GhostMouse from "../components/GhostMouse/GhostMouse";
 
-const roleOptions = [
-  { value: "admin", label: "管理员" },
-  { value: "teacher", label: "教师" },
-  { value: "student", label: "学生" },
-] as const;
-
-const LoginFormPage: React.FC = () => {
-  const login = useAuthStore((state) => state.login);
-
-  const [formMode, setFormMode] = useState<"login" | "register">("login");
+/** 登录页：只负责登录/注册表单和角色选择，认证状态交给 AuthStore 管理。 */
+export default function LoginFormPage() {
+  const { login, register, loading, error, clearError } = useAuthStore();
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [role, setRole] = useState<UserRole>("student");
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState<(typeof roleOptions)[number]["value"]>("admin");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
+  const [pwd, setPwd] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
 
-  const switchToRegister = () => {
-    setErrorMsg("");
-    setUsername("");
-    setPassword("");
-    setFormMode("register");
-  };
-
-  const switchToLogin = () => {
-    setErrorMsg("");
-    setUsername("");
-    setPassword("");
-    setFormMode("login");
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    clearError();
+    setMessage("");
 
-    try {
-      setErrorMsg("");
-
-      if (formMode === "login") {
-        await login(username, password, role);
-        return;
-      }
-
-      await apiRegister({
-        username,
-        pwd: password,
-        role,
-      });
-
-      setFormMode("login");
-      setUsername("");
-      setPassword("");
-      setErrorMsg("");
-      setSuccessMsg("注册成功，请登录");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "请求失败";
-      setErrorMsg(message || (formMode === "login" ? "账号或密码错误" : "注册失败"));
+    if (!username.trim() || !pwd.trim()) {
+      setMessage("请输入用户名和密码");
+      return;
     }
+
+    if (mode === "register") {
+      await register({ username: username.trim(), pwd, role, email: email.trim() || null });
+      setMessage("注册成功，请登录");
+      setMode("login");
+      setPwd("");
+      return;
+    }
+
+    await login(username.trim(), pwd, role);
   };
 
   return (
     <div className="login-wrapper">
-      <GhostMouse />
-
       <div className="login-container">
-        <h1>{formMode === "login" ? "Welcome" : "Register"}</h1>
+        <h1>{mode === "login" ? "欢迎登录智能学习系统" : "创建学习账号"}</h1>
 
-        <div className="role-switcher" role="tablist" aria-label="选择登录角色">
-          <span
-            className="role-switcher-indicator"
-            data-role={role}
-            aria-hidden="true"
-          />
-          {roleOptions.map((option) => (
+        <div className="role-switcher" aria-label="选择登录角色">
+          {(["admin", "teacher", "student"] as UserRole[]).map((item) => (
             <button
-              key={option.value}
+              key={item}
               type="button"
-              className={`role-switcher-item ${role === option.value ? "is-active" : ""}`}
-              onClick={() => setRole(option.value)}
-              role="tab"
-              aria-selected={role === option.value}
+              className={`role-switcher-item${role === item ? " is-active" : ""}`}
+              onClick={() => setRole(item)}
             >
-              {option.label}
+              {item === "admin" ? "管理员" : item === "teacher" ? "教师" : "学生"}
             </button>
           ))}
+          <span className="role-switcher-indicator" data-role={role} />
         </div>
 
-        <form className="login-form" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          {errorMsg && <p className="login-error">{errorMsg}</p>}
-          {successMsg && <p className="login-success">{successMsg}</p>}
-          <button type="submit">{formMode === "login" ? "Login" : "Register"}</button>
+        <form className="login-form" onSubmit={submit}>
+          <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="用户名" />
+          <input value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="密码" type="password" />
+          {mode === "register" && (
+            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="邮箱，可选" />
+          )}
+          {message && <p className="login-success">{message}</p>}
+          {error && <p className="login-error">{error}</p>}
+          <button type="submit" disabled={loading}>{loading ? "处理中…" : mode === "login" ? "登录" : "注册"}</button>
         </form>
 
-        <div className="login-divider"></div>
-
+        <div className="login-divider" />
         <div className="login-actions">
-          <span className="login-link" onClick={() => alert("忘记密码功能尚未实现")}>
-            忘记密码？
+          <span className="login-link" onClick={() => setMode(mode === "login" ? "register" : "login")}>
+            {mode === "login" ? "没有账号？去注册" : "已有账号？去登录"}
           </span>
-
-          {formMode === "login" ? (
-            <span className="login-link register" onClick={switchToRegister}>
-              立即注册
-            </span>
-          ) : (
-            <span className="login-link register" onClick={switchToLogin}>
-              已有账号？去登录
-            </span>
-          )}
+          <span className="login-link register">当前角色：{role}</span>
         </div>
       </div>
-
-      <ul className="bg-bubbles">
-        {Array.from({ length: 10 }).map((_, index) => (
-          <li key={index}></li>
-        ))}
-      </ul>
+      <ul className="bg-bubbles">{Array.from({ length: 10 }).map((_, index) => <li key={index} />)}</ul>
     </div>
   );
-};
-
-export default LoginFormPage;
+}

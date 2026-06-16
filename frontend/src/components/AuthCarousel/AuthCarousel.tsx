@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import "../../styles/components/AuthCarousel.css";
+import { useNavigate } from "react-router-dom";
 
 // 定义图片资源类型
 interface Asset {
@@ -59,10 +60,43 @@ const AuthCarousel: React.FC = () => {
   const toNext = () =>
     setActiveIndex((prev) => Math.min(ASSETS.length - 1, prev + 1));
   const toSlide = (index: number) => setActiveIndex(index);
+ 
+  const navigate = useNavigate();
+  const goLogin = () => {
+    navigate("/login");
+  };
+
+
 
   return (
     <div className="carousel-root">
+         <button 
+          onClick={goLogin}
+          style={{
+                  position: "absolute",
+                  top: "4%",
+                  right: "5%",
+                  zIndex: 10,
+
+                  width: "80px",
+                  height: "30px",
+                  borderRadius: "999px",
+
+                  color: "#fff",
+                  background: "rgba(255, 255, 255, 0.22)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+
+                  border: "1px solid rgba(255, 255, 255, 0.35)",
+                  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.16)",
+
+                  cursor: "pointer",
+                }}
+        >
+          Login
+        </button>
       <div className="carousel-wrapper">
+     
         <motion.div
           className="slides-track"
           animate={{ x: `${-activeIndex * (100 / ASSETS.length)}%` }}

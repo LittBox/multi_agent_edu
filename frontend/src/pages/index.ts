@@ -1,0 +1,12 @@
+export { default as LoginFormPage } from "./LoginFormPage";
+export { default as DashboardPage } from "./DashboardPage";
+export { default as CourseManagementView } from "./CourseManagementView";
+export { default as StudentCourseView } from "./StudentCourseView";
+export { default as KnowledgeWarehouseView } from "./KnowledgeWarehouseView";
+export { default as PracticePage } from "./PracticePage";
+export { default as ExamView } from "./ExamView";
+export { default as TaskView } from "./TaskView";
+export { default as ProfileView } from "./ProfileView";
+export { default as ReportView } from "./ReportView";
+export { default as SettingsView } from "./SettingsView";
+export { default as AdminView } from "./AdminView";
