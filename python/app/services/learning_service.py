@@ -7,24 +7,38 @@ from datetime import datetime, UTC
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dao.answerRecordDao import AnswerRecordDAO
-from app.dao.learnerStateDao import LearnerStateDAO
-from app.dao.reviewScheduleDao import ReviewScheduleDAO
+
 from app.db.models.answer_record import AnswerRecord
 from app.db.models.knowledge_point import KnowledgePoint
 from app.db.models.learner_state import LearnerState
 from app.db.models.question import Question
 from app.db.models.review_schedule import ReviewSchedule
 from app.services._helpers import question_to_dict, iso
-from app.core.learner_model import LearnerModel, KnowledgeState, MasteryLevel
+from app.core.learner_model import KnowledgeState, MasteryLevel
 
 
+#将事件改成结构化、过滤后的事件
+def _event_to_public_dict(event) -> dict:
+    data = dict(event.data or {})
+    data.pop("db", None)
+    data.pop("started_at", None)
 
+    return {
+        "id": event.id,
+        "type": event.type.value,
+        "source": event.source,
+        "timestamp": event.timestamp.isoformat(),
+        "learner_id": event.learner_id,
+        "data": data,
+    }
 
 
 class LearningService:
-    def __init__(self, orchestrator=None):
+    def __init__(self, orchestrator):
+        if orchestrator is None:
+            raise RuntimeError("LearningService requires AgentOrchestrator")
         self.orchestrator = orchestrator
+
 
     async def submit_answer(self, db: AsyncSession, req) -> dict:
         """提交练习答案。
@@ -43,6 +57,15 @@ class LearningService:
             raise ValueError("Question not found")
         is_correct = str(user_answer).strip().upper() == question.answer.strip().upper()
 
+        # 如果 quality_q 未提供，则根据是否正确自动设置；如果不正确，则限制最大值为 2。
+        if quality_q is None:
+            quality_q = None
+        elif not is_correct:
+            quality_q = min(int(quality_q), 2)
+        else:
+            quality_q = int(quality_q)
+
+
         if self.orchestrator:
             events = await self.orchestrator.submit_answer(
                 learner_id=str(user_id),
@@ -55,58 +78,7 @@ class LearningService:
                 db=db,
                 time_spent_seconds=time_spent_seconds,
             )
-            events_payload = [str(e) for e in events]
-        else:
-            await AnswerRecordDAO.create_answer_record(
-                db,
-                user_id=user_id,
-                question_id=question.question_id,
-                knowledge_id=question.knowledge_id,
-                is_correct=is_correct,
-                user_answer=str(user_answer).strip(),
-                quality_q=quality_q,
-                started_at=datetime.now(UTC),
-                submitted_at=datetime.now(UTC),
-                time_spent_seconds=time_spent_seconds,
-            )
-            state = await LearnerStateDAO.get_by_user_knowledge(
-                db,
-                user_id,
-                question.knowledge_id,
-            )
-
-            learner_model = LearnerModel.from_db_states(
-                learner_id=str(user_id),
-                db_states=[state] if state else [],
-            )
-
-            updated_state = learner_model.update_mastery(
-                knowledge_id=str(question.knowledge_id),
-                is_correct=is_correct,
-            )
-
-            await LearnerStateDAO.upsert_state(
-                db,
-                user_id=user_id,
-                knowledge_id=question.knowledge_id,
-                mastery=updated_state.mastery,
-                alpha=updated_state.alpha,
-                beta=updated_state.beta,
-                attempts=updated_state.attempts,
-                correct_attempts=updated_state.correct_count,
-                streak=updated_state.streak,
-                confidence=updated_state.confidence,
-                last_practiced_at=datetime.now(UTC),
-            )
-
-            await ReviewScheduleDAO.upsert_schedule(
-                db,
-                user_id=user_id,
-                knowledge_id=question.knowledge_id,
-                last_review_at=datetime.now(UTC),
-                next_review_at=datetime.now(UTC),
-            )
-            events_payload = []
+            events_payload = [_event_to_public_dict(e) for e in events]
 
         return {
             "is_correct": is_correct,
@@ -117,6 +89,8 @@ class LearningService:
             "events_triggered": len(events_payload),
             "events": events_payload,
         }
+
+    
 
     async def get_next_question(self, db: AsyncSession, user_id: int,
                                 knowledge_id: int | None = None) -> dict | None:

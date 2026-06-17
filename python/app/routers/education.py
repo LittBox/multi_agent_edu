@@ -19,6 +19,7 @@ from app.schemas.learning import ExplanationRequest, HintRequest, SubmitAnswerRe
 from app.services.learning_service import LearningService
 from app.services.question_service import QuestionService
 from app.services.report_service import ReportService
+from app.dependencies.learning import get_learning_service
 
 router = APIRouter(prefix="/education", tags=["education"])
 
@@ -53,9 +54,6 @@ class QuestionUpdateIn(BaseModel):
     image_url: str | None = None
 
 
-def _learning_service(request: Request) -> LearningService:
-    """从 app.state 读取 orchestrator，供智能辅导和提交答案使用。"""
-    return LearningService(getattr(request.app.state, "orchestrator", None))
 
 
 def _require_staff(user: User) -> None:
@@ -121,45 +119,87 @@ async def delete_question(question_id: int, current_user: User = Depends(get_cur
 
 
 @router.post("/submit")
-async def submit_answer(req: SubmitAnswerRequest, request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    """学生提交练习答案，并触发学习状态更新。"""
-    ensure_user_access(current_user, req.user_id)
+async def submit_answer(
+    req: SubmitAnswerRequest,
+    db: AsyncSession = Depends(get_db),
+    service: LearningService = Depends(get_learning_service),
+):
     try:
-        data = await _learning_service(request).submit_answer(db, req)
+        data = await service.submit_answer(db, req)
         return api_success(data, message="Answer submitted successfully")
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
 
 @router.get("/next-question/{user_id}")
-async def get_next_question(user_id: int, knowledge_id: int | None = Query(default=None), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_next_question(
+    user_id: int,
+    knowledge_id: int | None = Query(default=None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    service: LearningService = Depends(get_learning_service),
+):
     """按知识点、复习计划和薄弱点获取下一题。"""
     ensure_user_access(current_user, user_id)
-    data = await LearningService().get_next_question(db=db, user_id=user_id, knowledge_id=knowledge_id)
-    return api_success(data, message="Next question fetched successfully" if data else "No question available")
+    data = await service.get_next_question(
+        db=db,
+        user_id=user_id,
+        knowledge_id=knowledge_id,
+    )
+    return api_success(
+        data,
+        message="Next question fetched successfully" if data else "No question available",
+    )
 
 
 @router.get("/progress/{user_id}")
-async def get_progress(user_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_progress(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    service: LearningService = Depends(get_learning_service),
+):
     """获取学习进度。"""
     ensure_user_access(current_user, user_id)
-    data = await LearningService().get_progress(db=db, user_id=user_id)
+    data = await service.get_progress(db=db, user_id=user_id)
     return api_success(data, message="Progress fetched successfully")
 
 
 @router.get("/reviews/{user_id}")
-async def get_reviews(user_id: int, due_only: bool = Query(default=True), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_reviews(
+    user_id: int,
+    due_only: bool = Query(default=True),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    service: LearningService = Depends(get_learning_service),
+):
     """获取复习计划。"""
     ensure_user_access(current_user, user_id)
-    data = await LearningService().get_due_reviews(db=db, user_id=user_id, due_only=due_only)
+    data = await service.get_due_reviews(
+        db=db,
+        user_id=user_id,
+        due_only=due_only,
+    )
     return api_success(data, message="Reviews fetched successfully")
 
 
 @router.get("/answers/{user_id}")
-async def get_answer_history(user_id: int, limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_answer_history(
+    user_id: int,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    service: LearningService = Depends(get_learning_service),
+):
     """获取答题历史。"""
     ensure_user_access(current_user, user_id)
-    data = await LearningService().get_answer_history(db=db, user_id=user_id, limit=limit, offset=offset)
+    data = await service.get_answer_history(
+        db=db,
+        user_id=user_id,
+        limit=limit,
+        offset=offset,
+    )
     return api_success(data, message="Answer history fetched successfully")
 
 
@@ -172,32 +212,52 @@ async def get_learning_report(user_id: int, current_user: User = Depends(get_cur
 
 
 @router.post("/question")
-async def tutor_ask(req: TutorAskRequest, request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def tutor_ask(
+    req: TutorAskRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    service: LearningService = Depends(get_learning_service),
+):
     """智能辅导：提问。"""
     ensure_user_access(current_user, req.user_id)
-    data = await _learning_service(request).tutor_ask(db, req)
+    data = await service.tutor_ask(db, req)
     return api_success(data, message="Question processed successfully")
 
 
 @router.post("/message")
-async def tutor_message(req: TutorMessageRequest, request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def tutor_message(
+    req: TutorMessageRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    service: LearningService = Depends(get_learning_service),
+):
     """智能辅导：继续对话。"""
     ensure_user_access(current_user, req.user_id)
-    data = await _learning_service(request).tutor_message(db, req)
+    data = await service.tutor_message(db, req)
     return api_success(data, message="Message processed successfully")
 
 
 @router.post("/hint")
-async def request_hint(req: HintRequest, request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def request_hint(
+    req: HintRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    service: LearningService = Depends(get_learning_service),
+):
     """智能辅导：请求提示。"""
     ensure_user_access(current_user, req.user_id)
-    data = await _learning_service(request).request_hint(db, req)
+    data = await service.request_hint(db, req)
     return api_success(data, message="Hint generated successfully")
 
 
 @router.post("/explain")
-async def explain_answer(req: ExplanationRequest, request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def explain_answer(
+    req: ExplanationRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    service: LearningService = Depends(get_learning_service),
+):
     """智能辅导：解释答案。"""
     ensure_user_access(current_user, req.user_id)
-    data = await _learning_service(request).explain_answer(db, req)
+    data = await service.explain_answer(db, req)
     return api_success(data, message="Explanation generated successfully")

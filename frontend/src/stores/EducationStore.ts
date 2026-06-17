@@ -25,7 +25,8 @@ import {
   type SubmitAnswerParams,
   type SubmitAnswerResult,
 } from "../api/education";
-
+import { useDashboardStore } from "./DashboardStore";
+import { useKnowledgeStore } from "./KnowledgeStore";
 /** 学习练习与题库 Store：管理练习题、提交答案、学习进度、复习计划和学习报告。 */
 interface EducationStore {
   questions: Question[];
@@ -59,7 +60,7 @@ interface EducationStore {
 
 const getError = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
 
-export const useEducationStore = create<EducationStore>((set) => ({
+export const useEducationStore = create<EducationStore>((set, get) => ({
   questions: [],
   currentQuestion: null,
   answerResult: null,
@@ -120,6 +121,14 @@ export const useEducationStore = create<EducationStore>((set) => ({
   submitAnswer: async (params) => {
     const result = await submitAnswer(params);
     set({ answerResult: result });
+
+    await Promise.allSettled([
+      get().loadProgress(params.user_id),
+      get().loadReviews(params.user_id, false),
+      useKnowledgeStore.getState().loadRepository(params.user_id),
+      useDashboardStore.getState().loadHomeData(params.user_id),
+    ]);
+
     return result;
   },
 

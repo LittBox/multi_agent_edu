@@ -111,16 +111,9 @@ export const useKnowledgeStore = create<KnowledgeStore>((set, get) => ({
 
   joinPoint: async (knowledgeId, userId) => {
     const joined = await joinKnowledgePoint(knowledgeId, userId);
-    set((state) => ({
-      items: state.items.map((item) => item.knowledge_id === knowledgeId ? {
-        ...item,
-        status: "learning",
-        mastery: joined.mastery,
-        mastery_percent: joined.mastery_percent,
-        attempts: joined.attempts,
-        streak: joined.streak,
-      } : item),
-    }));
+
+    await get().loadRepository(userId);
+
     return joined;
   },
 }));

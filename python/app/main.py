@@ -18,7 +18,6 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import router
 from app.api.websocket import ws_router
 from app.api.orchestrator import AgentOrchestrator
 
@@ -81,7 +80,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router, prefix="/api/v1")
+
 app.include_router(auth_router, prefix="/api")
 app.include_router(academic_router, prefix="/api")
 app.include_router(education_router, prefix="/api")
