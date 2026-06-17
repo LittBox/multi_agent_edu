@@ -16,8 +16,10 @@ from app.db.models.learner_state import LearnerState
 from app.db.models.question import Question
 from app.db.models.review_schedule import ReviewSchedule
 from app.services._helpers import question_to_dict, iso
+from app.core.learner_model import LearnerModel, KnowledgeState, MasteryLevel
 
-MASTERY_MASTERED = 0.6
+
+
 
 
 class LearningService:
@@ -67,22 +69,36 @@ class LearningService:
                 submitted_at=datetime.now(UTC),
                 time_spent_seconds=time_spent_seconds,
             )
-            state = await LearnerStateDAO.get_by_user_knowledge(db, user_id, question.knowledge_id)
-            attempts = (state.attempts if state else 0) + 1
-            correct_attempts = (state.correct_attempts if state else 0) + (1 if is_correct else 0)
-            old_mastery = state.mastery if state else 0.2
-            new_mastery = min(1.0, old_mastery + 0.08) if is_correct else max(0.0, old_mastery - 0.05)
+            state = await LearnerStateDAO.get_by_user_knowledge(
+                db,
+                user_id,
+                question.knowledge_id,
+            )
+
+            learner_model = LearnerModel.from_db_states(
+                learner_id=str(user_id),
+                db_states=[state] if state else [],
+            )
+
+            updated_state = learner_model.update_mastery(
+                knowledge_id=str(question.knowledge_id),
+                is_correct=is_correct,
+            )
+
             await LearnerStateDAO.upsert_state(
                 db,
                 user_id=user_id,
                 knowledge_id=question.knowledge_id,
-                mastery=new_mastery,
-                attempts=attempts,
-                correct_attempts=correct_attempts,
-                streak=((state.streak if state else 0) + 1) if is_correct else 0,
-                confidence=min(1.0, attempts / 10),
+                mastery=updated_state.mastery,
+                alpha=updated_state.alpha,
+                beta=updated_state.beta,
+                attempts=updated_state.attempts,
+                correct_attempts=updated_state.correct_count,
+                streak=updated_state.streak,
+                confidence=updated_state.confidence,
                 last_practiced_at=datetime.now(UTC),
             )
+
             await ReviewScheduleDAO.upsert_schedule(
                 db,
                 user_id=user_id,
@@ -141,7 +157,15 @@ class LearningService:
             "attempts": s.attempts,
             "correct_attempts": s.correct_attempts,
             "streak": s.streak,
-            "status": "mastered" if s.mastery >= MASTERY_MASTERED else "learning",
+            "status": (
+                "mastered"
+                    if KnowledgeState(
+                        knowledge_id=str(s.knowledge_id),
+                        mastery=s.mastery,
+                        attempts=s.attempts,
+                    ).level == MasteryLevel.MASTERED
+                    else "learning"
+                ),
             "last_practiced_at": iso(s.last_practiced_at),
         } for s, kp in rows]
 

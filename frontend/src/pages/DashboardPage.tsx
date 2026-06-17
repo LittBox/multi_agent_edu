@@ -605,19 +605,7 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          <aside className="assistant-card">
-            <div className="assistant-title">
-              <h2>智能学习助手</h2>
-            </div>
-
-            <div className="assistant-item">
-              <span>先复习掌握度较低的知识点，再进入新知识点练习。</span>
-            </div>
-
-            <div className="assistant-item">
-              <span>错题会自动进入复习计划，请按时完成复习。</span>
-            </div>
-          </aside>
+    
 
           {knowledgeCards.slice(0, 3).map((card) => (
             <article className="knowledge-card" key={card.knowledge_id}>
@@ -644,29 +632,7 @@ export default function DashboardPage() {
             </article>
           ))}
 
-          <section className="path-card">
-            <h2>学习路径</h2>
-
-            <div className="path-list">
-              {(dashboard?.learning_path ?? []).slice(0, 6).map((node, index) => (
-                <div className="path-segment" key={node.knowledge_id}>
-                  <div className={`path-node ${node.status}`}>
-                    <span className="path-node-line">{node.name}</span>
-                    <small>{Math.round(node.mastery * 100)}%</small>
-                  </div>
-
-                  {index <
-                    Math.min(dashboard?.learning_path?.length ?? 0, 6) - 1 && (
-                    <span className="path-arrow">→</span>
-                  )}
-                </div>
-              ))}
-
-              {!dashboard?.learning_path?.length && (
-                <p className="path-empty">暂无学习路径数据</p>
-              )}
-            </div>
-          </section>
+       
         </div>
       </>
     );

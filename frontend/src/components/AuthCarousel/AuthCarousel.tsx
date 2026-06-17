@@ -12,44 +12,44 @@ interface Asset {
 
 const ASSETS: Asset[] = [
   {
-    src: "https://images.unsplash.com/photo-1769921546096-7a648d953a3e?q=80&w=500&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    title: "urban exploration",
+    src: "https://www.ynu.edu.cn/__local/9/1B/9A/9164431D754DC37494DB20A4770_9CB87F03_2315B.jpg",
+    title: "紧跟政策",
   },
   {
-    src: "https://images.unsplash.com/photo-1777726515600-65be20641e1b?q=80&w=500&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    title: "night scene",
+    src: "https://www.ynu.edu.cn/images/2026biyegehui.jpg",
+    title: "毕业歌会",
   },
   {
-    src: "https://images.unsplash.com/photo-1776582929657-9710d9cfa46a?q=80&w=500&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    title: "yellow wildflowers",
+    src: "https://www.ynu.edu.cn/__local/7/46/C9/99AF9883CF0FB16330DE3C108BA_4F817D26_F862A.jpg",
+    title: "校园马拉松",
   },
   {
-    src: "https://images.unsplash.com/photo-1776582929656-78ad8b515d75?q=80&w=500&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    title: "street with mount fuji",
+    src: "https://www.ynu.edu.cn/images/biyedianlidatu.jpg",
+    title: "毕业典礼",
   },
   {
-    src: "https://images.unsplash.com/photo-1775990630948-3c1f696f4ab1?q=80&w=500&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    title: "bridgestone bicycle shop",
+    src: "https://www.ynu.edu.cn/images/fuchuandai-mingyuanloucaihong.jpg",
+    title: "雨后彩虹",
   },
   {
-    src: "https://images.unsplash.com/photo-1775380744191-8fbff371c40b?q=80&w=500&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    title: "train window view",
+    src: "https://www.ynu.edu.cn/images/wangzhen-chenggongquanjing2.jpg",
+    title: "俯瞰云大",
   },
   {
-    src: "https://images.unsplash.com/photo-1774775479879-082fd47d41e1?q=80&w=500&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    title: "train tracks",
+    src: "https://www.ynu.edu.cn/images/tongxingyu-wuliguan.jpg",
+    title: "东陆物理馆",
   },
   {
-    src: "https://images.unsplash.com/photo-1773544517453-95c148cb42b7?q=80&w=500&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    title: "lawson convenience store",
+    src: "https://www.ynu.edu.cn/images/yinsijie-dongmenyundongchangzonghexunlianguan.jpg",
+    title: "东门体育馆",
   },
   {
-    src: "https://images.unsplash.com/photo-1771385809377-9b0348e1f8dc?q=80&w=500&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    title: "street scene",
+    src: "https://www.ynu.edu.cn/images/yunshanquanjing.jpg",
+    title: "云山夜景",
   },
   {
-    src: "https://images.unsplash.com/photo-1775990631076-f6f208079475?q=80&w=500&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    title: "japanese culture",
+    src: "https://www.ynu.edu.cn/__local/F/A0/8C/08F8C73167923DE34600D2D213A_1C1FBF7D_1E4FC0.jpg",
+    title: "云山歌会",
   },
 ];
 

@@ -1,7 +1,7 @@
 from datetime import datetime, UTC
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from python.app.db.models.task_bank import TaskBank, TaskRelease, TaskSubmission
+from app.db.models import TaskBank, TaskRelease, TaskSubmission
 
 """
 作业 DAO。

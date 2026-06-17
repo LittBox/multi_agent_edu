@@ -14,8 +14,9 @@ from app.db.models.knowledge_point import KnowledgePoint
 from app.db.models.learner_state import LearnerState
 from app.db.models.question import Question
 from app.services._helpers import knowledge_to_dict
+from app.core.learner_model import BKTParams, KnowledgeState, MasteryLevel
 
-MASTERY_MASTERED = 0.6
+
 
 
 class KnowledgeService:
@@ -51,18 +52,30 @@ class KnowledgeService:
         count_rows = (await self.db.execute(select(Question.knowledge_id, func.count(Question.question_id)).group_by(Question.knowledge_id))).all()
         question_counts = {kid: count for kid, count in count_rows}
 
+        def is_bkt_mastered(state: LearnerState | None) -> bool:
+            if state is None:
+                return False
+
+            return KnowledgeState(
+                knowledge_id=str(state.knowledge_id),
+                mastery=state.mastery,
+                attempts=state.attempts,
+            ).level == MasteryLevel.MASTERED
+
+
         def parent_mastered(parent_id: int | None) -> bool:
             if parent_id is None:
                 return True
+
             parent_state = states.get(parent_id)
-            return parent_state is not None and parent_state.mastery >= MASTERY_MASTERED
+            return is_bkt_mastered(parent_state)
 
         items = []
         for kp in points:
             state = states.get(kp.knowledge_id)
             mastery = state.mastery if state else 0.0
             attempts = state.attempts if state else 0
-            if mastery >= MASTERY_MASTERED:
+            if is_bkt_mastered(state):
                 status = "mastered"
             elif not parent_mastered(kp.parent_id):
                 status = "locked"
@@ -119,17 +132,22 @@ class KnowledgeService:
         kp = await KnowledgePointDAO.get_by_id(self.db, knowledge_id)
         if not kp:
             raise ValueError("Knowledge point not found")
+        initial_state = KnowledgeState(
+            knowledge_id=str(knowledge_id),
+            mastery=BKTParams().p_init,
+        )
+
         state = await LearnerStateDAO.upsert_state(
             self.db,
             user_id=user_id,
             knowledge_id=knowledge_id,
-            mastery=0.2,
-            alpha=1.0,
-            beta=9.0,
-            confidence=0.0,
-            attempts=0,
-            correct_attempts=0,
-            streak=0,
+            mastery=initial_state.mastery,
+            alpha=initial_state.alpha,
+            beta=initial_state.beta,
+            confidence=initial_state.confidence,
+            attempts=initial_state.attempts,
+            correct_attempts=initial_state.correct_count,
+            streak=initial_state.streak,
         )
         await ReviewScheduleDAO.upsert_schedule(
             self.db,
