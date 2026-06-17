@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as echarts from "echarts";
 import { BarChart3, ListChecks } from "lucide-react";
 import { useEducationStore } from "../stores";
@@ -8,76 +8,28 @@ interface ReportViewProps {
   userId: number;
 }
 
-type UnknownRecord = Record<string, unknown>;
-
 const clampScore = (value: number) =>
   Math.max(0, Math.min(Math.round(value), 100));
 
-const isRecord = (value: unknown): value is UnknownRecord => {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+const toSafeNumber = (value: number | string | null | undefined) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const parseNumber = (value: unknown): number | undefined => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-
-  if (typeof value === "string") {
-    const parsed = Number.parseFloat(value.trim().replace("%", ""));
-    return Number.isFinite(parsed) ? parsed : undefined;
-  }
-
-  return undefined;
+const toPercent = (value: number | string | null | undefined) => {
+  const raw = toSafeNumber(value);
+  return clampScore(raw <= 1 ? raw * 100 : raw);
 };
 
-const getNumber = (source: UnknownRecord, keys: string[]) => {
-  for (const key of keys) {
-    const parsed = parseNumber(source[key]);
+const escapeHtml = (value: unknown) =>
+  String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
-    if (parsed !== undefined) {
-      return parsed;
-    }
-  }
-
-  return undefined;
-};
-
-const pickFirstRecord = (source: UnknownRecord, keys: string[]) => {
-  for (const key of keys) {
-    const value = source[key];
-
-    if (isRecord(value)) {
-      return value;
-    }
-  }
-
-  return undefined;
-};
-
-const getOverviewSource = (report: unknown): UnknownRecord => {
-  if (!isRecord(report)) return {};
-
-  const overviewKeys = [
-    "overview",
-    "summary",
-    "stats",
-    "overview_data",
-    "overviewData",
-  ];
-
-  const directOverview = pickFirstRecord(report, overviewKeys);
-  if (directOverview) return directOverview;
-
-  const data = report.data;
-  if (isRecord(data)) {
-    const nestedOverview = pickFirstRecord(data, overviewKeys);
-    return nestedOverview ?? data;
-  }
-
-  return report;
-};
-
-/** 学习报告：使用 EducationStore 汇总学习概览、薄弱知识点和最近答题。 */
+/** 学习报告：展示后端计算好的学生画像、正确率趋势、薄弱点和学科统计。 */
 export default function ReportView({ userId }: ReportViewProps) {
   const { report, loading, error, loadReport } = useEducationStore();
 
@@ -88,94 +40,71 @@ export default function ReportView({ userId }: ReportViewProps) {
     if (userId) void loadReport(userId);
   }, [userId, loadReport]);
 
-  const overviewSource = getOverviewSource(report);
+  const overview = report?.overview ?? report?.summary;
 
   const totalAnswers = Math.max(
     0,
-    Math.round(
-      getNumber(overviewSource, [
-        "total_answers",
-        "totalAnswers",
-        "answers_total",
-        "answer_total",
-        "answerCount",
-        "answer_count",
-        "total_answer_count",
-        "total_count",
-        "totalQuestions",
-        "total_questions",
-        "question_count",
-        "answered_count",
-      ]) ?? 0
-    )
+    Math.round(toSafeNumber(overview?.total_answers))
   );
 
   const correctAnswers = Math.max(
     0,
-    Math.round(
-      getNumber(overviewSource, [
-        "correct_answers",
-        "correctAnswers",
-        "correct_answer_count",
-        "correctCount",
-        "correct_count",
-        "right_answers",
-        "rightAnswers",
-        "right_count",
-        "correct",
-      ]) ?? 0
-    )
+    Math.round(toSafeNumber(overview?.correct_answers))
   );
 
-  const rawAccuracy = getNumber(overviewSource, [
-    "accuracy",
-    "accuracy_percent",
-    "accuracyPercent",
-    "correct_rate",
-    "correctRate",
-    "rate",
-    "correct_ratio",
-  ]);
+  const accuracyPercent = toPercent(overview?.accuracy);
 
-  const accuracyPercent = clampScore(
-    rawAccuracy !== undefined
-      ? rawAccuracy <= 1
-        ? rawAccuracy * 100
-        : rawAccuracy
-      : totalAnswers > 0
-        ? (correctAnswers / totalAnswers) * 100
-        : 0
-  );
-
-  const streakDays = Math.max(
+  const masteredCount = Math.max(
     0,
-    Math.round(
-      getNumber(overviewSource, [
-        "streak_days",
-        "streakDays",
-        "continuous_days",
-        "continuousDays",
-        "consecutive_days",
-        "consecutiveDays",
-        "study_streak",
-        "studyStreak",
-      ]) ?? 0
-    )
+    Math.round(toSafeNumber(overview?.mastered_count))
   );
 
-  // 雷达图只展示 0-100 的归一化能力分，避免把题数、百分比、天数混在同一坐标系里。
-  const activityScore = clampScore((totalAnswers / 20) * 100);
-  const completionScore = clampScore((correctAnswers / 20) * 100);
-  const accuracyScore = accuracyPercent;
-  const persistenceScore = clampScore((streakDays / 7) * 100);
-  const hasEnoughOverviewData = totalAnswers >= 5;
+  const learningCount = Math.max(
+    0,
+    Math.round(toSafeNumber(overview?.learning_count))
+  );
+
+  const trackedKnowledgeCount = Math.max(
+    0,
+    Math.round(toSafeNumber(overview?.knowledge_points_tracked))
+  );
+
+  const todayStudyMinutes = Math.max(
+    0,
+    Math.round(toSafeNumber(overview?.today_study_minutes))
+  );
+
+  const radarItems = useMemo(
+    () => report?.profile?.radar ?? [],
+    [report?.profile?.radar]
+  );
+
+  const radarChartData = useMemo(() => {
+    const indicators = radarItems.map((item) => ({
+      name: item.label,
+      max: 100,
+    }));
+
+    const scores = radarItems.map((item) =>
+      clampScore(toSafeNumber(item.score))
+    );
+
+    return {
+      indicators,
+      scores,
+      hasData: radarItems.length > 0,
+    };
+  }, [radarItems]);
 
   const overviewStats = [
     { label: "答题总数", value: `${totalAnswers}` },
     { label: "正确题数", value: `${correctAnswers}` },
     { label: "正确率", value: `${accuracyPercent}%` },
-    { label: "连续学习", value: `${streakDays} 天` },
+    { label: "跟踪知识点", value: `${trackedKnowledgeCount}` },
   ];
+
+  const hasEnoughOverviewData =
+    radarChartData.hasData && (totalAnswers > 0 || trackedKnowledgeCount > 0);
 
   useEffect(() => {
     const chartDom = overviewChartRef.current;
@@ -183,27 +112,10 @@ export default function ReportView({ userId }: ReportViewProps) {
 
     const chart = echarts.init(chartDom);
 
-    const currentScores = [
-      activityScore,
-      completionScore,
-      accuracyScore,
-      persistenceScore,
-    ];
-    const targetScores = [70, 70, 80, 60];
-
-    const formatScores = (scores: number[]) => {
-      return `
-        <div>学习活跃度：${scores[0]} 分</div>
-        <div>答题完成度：${scores[1]} 分</div>
-        <div>正确率表现：${scores[2]} 分</div>
-        <div>学习坚持度：${scores[3]} 分</div>
-      `;
-    };
-
     const option: echarts.EChartsOption = {
-      color: ["rgba(255, 255, 255, 0.45)", "#33ddb9"],
+      color: ["#33ddb9"],
       tooltip: {
-        show: hasEnoughOverviewData,
+        show: radarChartData.hasData,
         trigger: "item",
         confine: true,
         backgroundColor: "rgba(15, 23, 42, 0.92)",
@@ -213,34 +125,25 @@ export default function ReportView({ userId }: ReportViewProps) {
           color: "#ffffff",
           fontSize: 12,
         },
-        formatter: (params) => {
-          const safeParams = params as {
-            name?: string;
-            value?: Array<number | string>;
-          };
-          const isTarget = safeParams.name === "阶段目标";
-          const scores = isTarget
-            ? targetScores
-            : (safeParams.value ?? currentScores).map((item) => Number(item));
+        formatter: () => {
+          const rows = radarItems
+            .map((item) => {
+              const score = clampScore(toSafeNumber(item.score));
 
-          if (isTarget) {
-            return `
-              <div>
-                <div style="margin-bottom: 6px; font-weight: 600;">阶段目标</div>
-                ${formatScores(scores)}
-              </div>
-            `;
-          }
+              return `
+                <div style="margin-bottom: 8px;">
+                  <div><strong>${escapeHtml(item.label)}：${score} 分</strong></div>
+                  <div style="opacity: .72;">公式：${escapeHtml(item.formula)}</div>
+                  <div style="opacity: .56;">来源：${escapeHtml(item.source)}</div>
+                </div>
+              `;
+            })
+            .join("");
 
           return `
             <div>
-              <div style="margin-bottom: 6px; font-weight: 600;">当前表现</div>
-              ${formatScores(scores)}
-              <div style="height: 1px; margin: 8px 0; background: rgba(255, 255, 255, 0.16);"></div>
-              <div>答题总数：${totalAnswers}</div>
-              <div>正确题数：${correctAnswers}</div>
-              <div>正确率：${accuracyPercent}%</div>
-              <div>连续学习：${streakDays} 天</div>
+              <div style="margin-bottom: 8px; font-weight: 600;">学生画像</div>
+              ${rows}
             </div>
           `;
         },
@@ -248,12 +151,16 @@ export default function ReportView({ userId }: ReportViewProps) {
       radar: {
         radius: "64%",
         center: ["50%", "52%"],
-        indicator: [
-          { name: "学习活跃度", max: 100 },
-          { name: "答题完成度", max: 100 },
-          { name: "正确率表现", max: 100 },
-          { name: "学习坚持度", max: 100 },
-        ],
+        indicator:
+          radarChartData.indicators.length > 0
+            ? radarChartData.indicators
+            : [
+                { name: "知识掌握", max: 100 },
+                { name: "答题准确", max: 100 },
+                { name: "练习活跃", max: 100 },
+                { name: "学习稳定", max: 100 },
+                { name: "复习健康", max: 100 },
+              ],
         axisName: {
           color: "rgba(255, 255, 255, 0.92)",
           fontSize: 12,
@@ -279,32 +186,17 @@ export default function ReportView({ userId }: ReportViewProps) {
           },
         },
       },
-      series: hasEnoughOverviewData
+      series: radarChartData.hasData
         ? [
             {
-              name: "学习概览",
+              name: "学生画像",
               type: "radar",
               symbol: "circle",
               symbolSize: 5,
               data: [
                 {
-                  value: targetScores,
-                  name: "阶段目标",
-                  areaStyle: {
-                    color: "rgba(255, 255, 255, 0.04)",
-                  },
-                  lineStyle: {
-                    color: "rgba(255, 255, 255, 0.38)",
-                    width: 2,
-                    type: "dashed",
-                  },
-                  itemStyle: {
-                    color: "rgba(255, 255, 255, 0.68)",
-                  },
-                },
-                {
-                  value: currentScores,
-                  name: "当前表现",
+                  value: radarChartData.scores,
+                  name: "当前画像",
                   areaStyle: {
                     color: "rgba(51, 221, 185, 0.22)",
                   },
@@ -338,17 +230,7 @@ export default function ReportView({ userId }: ReportViewProps) {
       window.removeEventListener("resize", handleResize);
       chart.dispose();
     };
-  }, [
-    activityScore,
-    completionScore,
-    accuracyScore,
-    persistenceScore,
-    hasEnoughOverviewData,
-    totalAnswers,
-    correctAnswers,
-    accuracyPercent,
-    streakDays,
-  ]);
+  }, [radarChartData, radarItems]);
 
   useEffect(() => {
     const chartDom = accuracyChartRef.current;
@@ -358,9 +240,7 @@ export default function ReportView({ userId }: ReportViewProps) {
     const dailyAccuracy = report?.daily_accuracy ?? [];
 
     const xAxisData = dailyAccuracy.map((item) => item.date);
-    const seriesData = dailyAccuracy.map((item) =>
-      Math.round(Number(item.accuracy ?? 0) * 100)
-    );
+    const seriesData = dailyAccuracy.map((item) => toPercent(item.accuracy));
 
     const option: echarts.EChartsOption = {
       grid: {
@@ -440,8 +320,9 @@ export default function ReportView({ userId }: ReportViewProps) {
       <section className="report-card">
         <h2>
           <BarChart3 size={18} />
-          学习概览
+          学生画像
         </h2>
+
         <div
           className="report-overview-layout"
           style={{
@@ -463,7 +344,7 @@ export default function ReportView({ userId }: ReportViewProps) {
               ref={overviewChartRef}
               className="report-chart"
               role="img"
-              aria-label="学习概览雷达图"
+              aria-label="学生画像雷达图"
               style={{ width: "100%", height: "300px" }}
             />
 
@@ -488,7 +369,7 @@ export default function ReportView({ userId }: ReportViewProps) {
                     marginBottom: "8px",
                   }}
                 >
-                  完成 5 道题后生成学习画像
+                  完成练习后生成学生画像
                 </strong>
                 <span
                   style={{
@@ -498,7 +379,7 @@ export default function ReportView({ userId }: ReportViewProps) {
                     lineHeight: 1.6,
                   }}
                 >
-                  当前数据较少，建议先完成一次练习，再查看能力趋势。
+                  画像维度由后端根据答题记录、掌握度和复习计划统一计算。
                 </span>
               </div>
             )}
