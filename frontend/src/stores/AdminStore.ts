@@ -15,7 +15,7 @@ interface AdminStore {
   roles: RoleItem[];
   menus: MenuItem[];
   permissions: PermissionItem[];
-  rolePermissions: PermissionItem[];
+  rolePermissions: RolePermissionItem[];
   permissionMenuBindings: PermissionMenuItem[];
   loading: boolean;
   error: string | null;
@@ -38,12 +38,12 @@ interface AdminStore {
   updatePermission: (permissionId: number, payload: Partial<{ permission_name: string; permission_code: string; description: string | null }>) => Promise<PermissionItem>;
   deletePermission: (permissionId: number) => Promise<void>;
 
-  loadRolePermissions: (roleId: number) => Promise<PermissionItem[]>;
+  loadRolePermissions: (roleId: number) => Promise<RolePermissionItem[]>;
   bindRolePermission: (payload: { role_id: number; permission_id: number }) => Promise<RolePermissionItem>;
-  unbindRolePermission: (roleId: number, permissionId: number) => Promise<void>;
+  unbindRolePermission: (roleId: number, permissionId: number) => Promise<boolean>;
 
   bindPermissionMenu: (payload: { permission_id: number; menu_id: number }) => Promise<PermissionMenuItem>;
-  unbindPermissionMenu: (permissionId: number, menuId: number) => Promise<void>;
+  unbindPermissionMenu: (permissionId: number, menuId: number) => Promise<boolean>;
 }
 
 const getError = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
@@ -85,9 +85,9 @@ export const useAdminStore = create<AdminStore>((set) => ({
   },
 
   updateRole: async (roleId, roleName) => {
-    const updated = await adminApi.updateRole(roleId, roleName);
-    set((state) => ({ roles: state.roles.map((item) => item.role_id === roleId ? updated : item) }));
-    return updated;
+    const role = await adminApi.updateRole(roleId, roleName);
+    set((state) => ({ roles: state.roles.map((item) => item.role_id === roleId ? role : item) }));
+    return role;
   },
 
   deleteRole: async (roleId) => {
@@ -110,9 +110,9 @@ export const useAdminStore = create<AdminStore>((set) => ({
   },
 
   updateMenu: async (menuId, payload) => {
-    const updated = await adminApi.updateMenu(menuId, payload);
-    set((state) => ({ menus: state.menus.map((item) => item.menu_id === menuId ? updated : item) }));
-    return updated;
+    const menu = await adminApi.updateMenu(menuId, payload);
+    set((state) => ({ menus: state.menus.map((item) => item.menu_id === menuId ? menu : item) }));
+    return menu;
   },
 
   deleteMenu: async (menuId) => {
@@ -133,9 +133,9 @@ export const useAdminStore = create<AdminStore>((set) => ({
   },
 
   updatePermission: async (permissionId, payload) => {
-    const updated = await adminApi.updatePermission(permissionId, payload);
-    set((state) => ({ permissions: state.permissions.map((item) => item.permission_id === permissionId ? updated : item) }));
-    return updated;
+    const permission = await adminApi.updatePermission(permissionId, payload);
+    set((state) => ({ permissions: state.permissions.map((item) => item.permission_id === permissionId ? permission : item) }));
+    return permission;
   },
 
   deletePermission: async (permissionId) => {
@@ -149,21 +149,27 @@ export const useAdminStore = create<AdminStore>((set) => ({
     return rolePermissions;
   },
 
-  bindRolePermission: async (payload) => adminApi.bindRolePermission(payload),
+  bindRolePermission: async (payload) => {
+    const rolePermission = await adminApi.bindRolePermission(payload);
+    set((state) => ({ rolePermissions: [rolePermission, ...state.rolePermissions] }));
+    return rolePermission;
+  },
 
   unbindRolePermission: async (roleId, permissionId) => {
-    await adminApi.unbindRolePermission(roleId, permissionId);
+    const success = await adminApi.unbindRolePermission(roleId, permissionId);
     set((state) => ({ rolePermissions: state.rolePermissions.filter((item) => item.permission_id !== permissionId) }));
+    return success;
   },
 
   bindPermissionMenu: async (payload) => {
-    const binding = await adminApi.bindPermissionMenu(payload);
-    set((state) => ({ permissionMenuBindings: [binding, ...state.permissionMenuBindings] }));
-    return binding;
+    const permissionMenu = await adminApi.bindPermissionMenu(payload);
+    set((state) => ({ permissionMenuBindings: [permissionMenu, ...state.permissionMenuBindings] }));
+    return permissionMenu;
   },
 
   unbindPermissionMenu: async (permissionId, menuId) => {
-    await adminApi.unbindPermissionMenu(permissionId, menuId);
+    const success = await adminApi.unbindPermissionMenu(permissionId, menuId);
     set((state) => ({ permissionMenuBindings: state.permissionMenuBindings.filter((item) => !(item.permission_id === permissionId && item.menu_id === menuId)) }));
+    return success;
   },
 }));

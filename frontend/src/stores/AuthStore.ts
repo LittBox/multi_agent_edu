@@ -135,6 +135,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (!current) {
       throw new Error("当前未登录");
     }
+    if (current?.user_id == null) {
+      throw new Error("当前用户不存在，无法更新资料");
+    }
     const updated = await updateUserInfo(current.user_id, params);
     set({ user: updated, error: null });
     return updated;

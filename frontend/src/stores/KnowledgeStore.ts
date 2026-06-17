@@ -96,7 +96,7 @@ export const useKnowledgeStore = create<KnowledgeStore>((set, get) => ({
     const updated = await updateKnowledgePoint(knowledgeId, params);
     set((state) => ({
       allPoints: state.allPoints.map((item) => item.knowledge_id === knowledgeId ? updated : item),
-      items: state.items.map((item) => item.knowledge_id === knowledgeId ? { ...item, ...updated } : item),
+      items: state.items.map((item) => item.knowledge_id === knowledgeId ? { ...item, ...updated, description: updated.description ?? "",} : item),
     }));
     return updated;
   },

@@ -71,7 +71,7 @@ export const adminApi = {
 
   /** 角色-权限、权限-菜单绑定 */
   bindRolePermission: (payload: { role_id: number; permission_id: number }) => request.post<RolePermissionItem>("/admin/role-permissions", payload),
-  listRolePermissions: (roleId: number) => request.get<PermissionItem[]>(`/admin/roles/${roleId}/permissions`),
+  listRolePermissions: (roleId: number) => request.get<RolePermissionItem[]>(`/admin/roles/${roleId}/permissions`),
   unbindRolePermission: (roleId: number, permissionId: number) => request.delete<boolean>(`/admin/roles/${roleId}/permissions/${permissionId}`),
   bindPermissionMenu: (payload: { permission_id: number; menu_id: number }) => request.post<PermissionMenuItem>("/admin/permission-menus", payload),
   unbindPermissionMenu: (permissionId: number, menuId: number) => request.delete<boolean>(`/admin/permissions/${permissionId}/menus/${menuId}`),

@@ -98,4 +98,8 @@ export const taskApi = {
   /** PUT /tasks/submissions/{submit_id}/grade：教师批改 */
   grade: (submitId: number, payload: { score: number; comment?: string | null }) =>
     request.put<TaskSubmissionItem>(`/tasks/submissions/${submitId}/grade`, payload),
+  
+  /** GET /tasks/releases/{task_publish_id}/submissions：教师查看某次发布作业的提交列表 */
+  submissions: (taskPublishId: number) => 
+    request.get<TaskSubmissionItem[]>(`/tasks/releases/${taskPublishId}/submit`),
 };

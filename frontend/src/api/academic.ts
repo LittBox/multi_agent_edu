@@ -225,7 +225,7 @@ export const listClasses = academicApi.listClasses;
 export const getClassDetail = academicApi.getClassDetail;
 export const createClass = academicApi.createClass;
 export const updateClass = academicApi.updateClass;
-export const closeClass =  (classId: number, _teacherId?: number): Promise<TeachingClass> =>
+export const closeClass = async (classId: number, _teacherId?: number): Promise<TeachingClass> =>
   academicApi.updateClassStatus(classId, "closed");
 export const listClassStudents = academicApi.listClassStudents;
 export const listClassSchedules = async (classId: number): Promise<TeachingClassSchedule[]> => {

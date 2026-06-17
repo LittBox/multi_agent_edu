@@ -86,9 +86,9 @@ export const useAcademicStore = create<AcademicStore>((set, get) => ({
   loadStudents: async () => {
     set({ loading: true, error: null });
     try {
-      const students = await academicApi.listStudents();
-      set({ students, loading: false });
-      return students;
+      const res = await academicApi.listStudents();
+      set({ students: res, loading: false });
+      return res;
     } catch (error) {
       set({ loading: false, error: errorMessage(error, "加载学生列表失败") });
       throw error;
@@ -102,9 +102,9 @@ export const useAcademicStore = create<AcademicStore>((set, get) => ({
   },
 
   updateStudent: async (studentId, params) => {
-    const updated = await academicApi.updateStudent(studentId, params);
-    set((state) => ({ students: state.students.map((item) => item.student_id === studentId ? updated : item) }));
-    return updated;
+    const student = await academicApi.updateStudent(studentId, params);
+    set((state) => ({ students: state.students.map((item) => item.student_id === studentId ? student : item) }));
+    return student;
   },
 
   deleteStudent: async (studentId) => {
@@ -131,9 +131,9 @@ export const useAcademicStore = create<AcademicStore>((set, get) => ({
   },
 
   updateTeacher: async (teacherId, params) => {
-    const updated = await academicApi.updateTeacher(teacherId, params);
-    set((state) => ({ teachers: state.teachers.map((item) => item.teacher_id === teacherId ? updated : item) }));
-    return updated;
+    const teacher = await academicApi.updateTeacher(teacherId, params);
+    set((state) => ({ teachers: state.teachers.map((item) => item.teacher_id === teacherId ? teacher : item) }));
+    return teacher;
   },
 
   deleteTeacher: async (teacherId) => {
@@ -166,12 +166,12 @@ export const useAcademicStore = create<AcademicStore>((set, get) => ({
   },
 
   updateCourse: async (courseId, params) => {
-    const updated = await academicApi.updateCourse(courseId, params);
+    const course = await academicApi.updateCourse(courseId, params);
     set((state) => ({
-      courses: state.courses.map((item) => item.course_id === courseId ? updated : item),
-      selectedCourse: state.selectedCourse?.course_id === courseId ? updated : state.selectedCourse,
+      courses: state.courses.map((item) => item.course_id === courseId ? course : item),
+      selectedCourse: state.selectedCourse?.course_id === courseId ? course : state.selectedCourse,
     }));
-    return updated;
+    return course;
   },
 
   deleteCourse: async (courseId) => {
@@ -220,9 +220,9 @@ export const useAcademicStore = create<AcademicStore>((set, get) => ({
   loadAvailableClasses: async (semester) => {
     set({ loading: true, error: null });
     try {
-      const availableClasses = await academicApi.listAvailableClasses(semester);
-      set({ availableClasses, loading: false });
-      return availableClasses;
+      const res = await academicApi.listAvailableClasses(semester);
+      set({ availableClasses: res, loading: false });
+      return res;
     } catch (error) {
       set({ loading: false, error: errorMessage(error, "加载可选课程失败") });
       throw error;
@@ -232,9 +232,9 @@ export const useAcademicStore = create<AcademicStore>((set, get) => ({
   loadMyEnrollments: async (status = "enrolled") => {
     set({ loading: true, error: null });
     try {
-      const myEnrollments = await academicApi.listMyEnrollments(status);
-      set({ myEnrollments, loading: false });
-      return myEnrollments;
+      const res = await academicApi.listMyEnrollments(status);
+      set({ myEnrollments: res, loading: false });
+      return res;
     } catch (error) {
       set({ loading: false, error: errorMessage(error, "加载我的选课失败") });
       throw error;
@@ -242,9 +242,9 @@ export const useAcademicStore = create<AcademicStore>((set, get) => ({
   },
 
   enrollClass: async (classId) => {
-    const enrollment = await academicApi.enrollClass(classId);
+    const res = await academicApi.enrollClass(classId);
     await Promise.all([get().loadAvailableClasses(), get().loadMyEnrollments()]);
-    return enrollment;
+    return res;
   },
 
   dropEnrollment: async (enrollmentId) => {
@@ -253,10 +253,14 @@ export const useAcademicStore = create<AcademicStore>((set, get) => ({
   },
 
   updateEnrollmentScore: async (enrollmentId, courseScore) => {
-    const updated = await academicApi.updateEnrollmentScore(enrollmentId, courseScore);
+    const res = await academicApi.updateEnrollmentScore(enrollmentId, courseScore);
     set((state) => ({
-      myEnrollments: state.myEnrollments.map((item) => item.enrollment_id === enrollmentId ? { ...item, course_score: updated.course_score } : item),
+      myEnrollments: state.myEnrollments.map((item) =>
+        item.enrollment_id === enrollmentId
+          ? { ...item, course_score: res.course_score }
+          : item
+      ),
     }));
-    return updated;
+    return res;
   },
 }));

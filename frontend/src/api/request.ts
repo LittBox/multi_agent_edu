@@ -1,4 +1,8 @@
-import axios, { type AxiosInstance, type AxiosResponse } from "axios";
+import axios, {
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+} from "axios";
 
 /**
  * 后端统一响应结构。
@@ -57,7 +61,7 @@ function normalizeFastApiDetail(detail: FastApiErrorDetail | undefined): string 
  * 因此各 API 方法的 Promise<T> 中 T 就是后端 data 的类型。
  */
 instance.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse>) => {
+  (response: AxiosResponse<ApiResponse>): any => {
     const { code, message, data } = response.data;
     if (code !== 0) {
       return Promise.reject(new Error(message || "请求失败"));
@@ -71,4 +75,15 @@ instance.interceptors.response.use(
   }
 );
 
-export default instance;
+type RequestClient = Omit<
+  AxiosInstance,
+  "get" | "post" | "put" | "patch" | "delete"
+> & {
+  get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+};
+
+export default instance as RequestClient;

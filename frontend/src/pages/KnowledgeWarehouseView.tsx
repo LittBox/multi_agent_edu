@@ -42,7 +42,7 @@ export default function KnowledgeWarehouseView({ userId }: KnowledgeWarehouseVie
   return (
     <div className="warehouse-view">
       <header className="warehouse-header">
-        <div><h1>知识仓库</h1><p>选择知识点加入个人仓库，完成练习后会更新学习状态。</p></div>
+    
         <button type="button" className="warehouse-practice-all" onClick={() => void startPractice()}><Play size={18} />随机练习</button>
       </header>
 
