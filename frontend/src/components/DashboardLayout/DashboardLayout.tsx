@@ -40,7 +40,7 @@ const MENU_CONFIG: Array<{
   icon: typeof House;
   roles: UserRole[];
 }> = [
-  { view: "home", tooltip: "首页", icon: House, roles: ["admin", "teacher", "student"] },
+  { view: "home", tooltip: "首页", icon: House, roles: ["student"] },
   { view: "users", tooltip: "人员管理", icon: User, roles: ["admin"] },
   { view: "admin-stats", tooltip: "人员统计", icon: ChartColumn, roles: ["admin"] },
   { view: "courses", tooltip: "课程管理", icon: GraduationCap, roles: ["teacher"] },

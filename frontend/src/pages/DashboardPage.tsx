@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as echarts from "echarts";
 import {
   BookOpen,
@@ -65,14 +65,23 @@ const pageTitle: Record<PageKey, string> = {
 const toStudyMinutes = (value: number | string | null | undefined) =>
   Math.max(0, Number(value) || 0);
 
-const formatStudyDuration = (value: number | string) => {
+/**
+ * 首页统一按“整数分钟”展示和绘图。
+ * 只要后端返回大于 0 但不足 1 分钟，也按 1 分钟展示，
+ * 避免图表柱子高度和文字标签出现“都是 1 分钟但高度不同”的情况。
+ */
+const toDisplayMinutes = (value: number | string | null | undefined) => {
   const rawMinutes = toStudyMinutes(value);
 
-  if (rawMinutes > 0 && rawMinutes < 1) {
-    return `约${Math.max(1, Math.round(rawMinutes * 60))}秒`;
+  if (rawMinutes <= 0) {
+    return 0;
   }
 
-  const minutes = Math.max(0, Math.round(rawMinutes));
+  return Math.max(1, Math.round(rawMinutes));
+};
+
+const formatStudyDuration = (value: number | string) => {
+  const minutes = toDisplayMinutes(value);
 
   if (minutes < 60) {
     return `${minutes}分钟`;
@@ -89,17 +98,17 @@ const formatStudyDuration = (value: number | string) => {
 };
 
 const formatMetricDuration = (value: number | string | null | undefined) => {
-  const rawMinutes = toStudyMinutes(value);
+  const minutes = toDisplayMinutes(value);
 
-  if (rawMinutes <= 0) {
+  if (minutes <= 0) {
     return "0";
   }
 
-  return formatStudyDuration(rawMinutes);
+  return formatStudyDuration(minutes);
 };
 
 const getTrendMinutes = (trend: TrendItem[]) =>
-  trend.map((item) => toStudyMinutes(item.minutes));
+  trend.map((item) => toDisplayMinutes(item.minutes));
 
 const getWeekTotalMinutes = (
   trend: TrendItem[],
@@ -109,7 +118,7 @@ const getWeekTotalMinutes = (
   const parsedWeekTotal = Number(explicitWeekTotal);
 
   if (Number.isFinite(parsedWeekTotal)) {
-    return Math.max(0, parsedWeekTotal);
+    return toDisplayMinutes(parsedWeekTotal);
   }
 
   const recentSevenDays = getTrendMinutes(trend).slice(-7);
@@ -118,7 +127,7 @@ const getWeekTotalMinutes = (
     return recentSevenDays.reduce((sum, minutes) => sum + minutes, 0);
   }
 
-  return weekAvgMinutes * 7;
+  return toDisplayMinutes(weekAvgMinutes * 7);
 };
 
 const buildTrendYAxis = (maxMinutes: number) => {
@@ -196,11 +205,38 @@ export default function DashboardPage() {
   const userId = user?.user_id ?? user?.id ?? 0;
   const role = user?.role ?? "student";
 
-  useEffect(() => {
-    if (userId) {
-      void loadHomeData(userId);
-    }
+  const refreshHomeData = useCallback(() => {
+    if (!userId) return;
+    void loadHomeData(userId);
   }, [userId, loadHomeData]);
+
+  useEffect(() => {
+    if (active !== "home") return;
+
+    refreshHomeData();
+  }, [active, refreshHomeData]);
+
+  useEffect(() => {
+    if (active !== "home" || !userId) return;
+
+    const handleWindowFocus = () => {
+      refreshHomeData();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshHomeData();
+      }
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [active, userId, refreshHomeData]);
 
   useEffect(() => {
     if (active !== "home") return;
@@ -378,7 +414,7 @@ export default function DashboardPage() {
                 fontSize: 11,
                 formatter: (params) => {
                   const safeParams = params as { value?: number | string };
-                  const minutes = toStudyMinutes(safeParams.value);
+                  const minutes = toDisplayMinutes(safeParams.value);
                   return minutes > 0 ? formatStudyDuration(minutes) : "";
                 },
               },
@@ -525,7 +561,7 @@ export default function DashboardPage() {
 
     const summary = dashboard?.summary as DashboardSummaryLike | undefined;
     const trend = summary?.trend ?? [];
-    const todayStudyMinutes = toStudyMinutes(summary?.today_study_minutes);
+    const todayStudyMinutes = toDisplayMinutes(summary?.today_study_minutes);
     const weekAvgMinutes = toStudyMinutes(summary?.week_avg_minutes);
     const weekTotalMinutes = getWeekTotalMinutes(
       trend,

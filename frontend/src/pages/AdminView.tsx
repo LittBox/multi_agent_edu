@@ -17,7 +17,7 @@ export default function AdminView() {
   return (
     <div className="course-management-view">
       <header className="course-header">
-        <div><h1>后台管理</h1><p>管理系统角色、菜单、权限和数据统计。</p></div>
+
         <div className="course-header-actions"><button className="course-btn ghost" type="button" onClick={() => void refresh()}><RefreshCw size={16} />刷新</button></div>
       </header>
       {loading && <p className="course-empty">加载中…</p>}

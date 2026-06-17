@@ -94,10 +94,6 @@ export default function ExamView({ role }: ExamViewProps) {
   return (
     <div className="course-management-view">
       <header className="course-header">
-        <div>
-          <h1>考试中心</h1>
-          <p>查看考试列表、进入考试，并跟踪自己的考试提交记录。</p>
-        </div>
 
         <div className="course-header-actions">
           <button

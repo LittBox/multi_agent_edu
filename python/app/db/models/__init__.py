@@ -18,7 +18,7 @@ from app.db.models.review_schedule import ReviewSchedule
 from app.db.models.role import Role
 from app.db.models.role_menu import RoleMenu
 from app.db.models.student import Student
-from app.db.models.task import TaskBank, TaskRelease, TaskSubmission
+from python.app.db.models import TaskBank, TaskRelease, TaskSubmission
 from app.db.models.teacher import Teacher
 from app.db.models.teaching_class import TeachingClass
 from app.db.models.user import User

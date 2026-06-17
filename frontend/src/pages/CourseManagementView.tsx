@@ -47,7 +47,6 @@ export default function CourseManagementView({ role }: CourseManagementViewProps
   return (
     <div className="course-management-view">
       <header className="course-header">
-        <div><h1>课程管理</h1><p>{role === "admin" ? "管理员可查看课程与教学班。" : "教师可创建课程、开设教学班。"}</p></div>
         <div className="course-header-actions"><button className="course-btn ghost" type="button" onClick={() => void refresh()}><RefreshCw size={16} />刷新</button></div>
       </header>
 
