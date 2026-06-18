@@ -7,7 +7,7 @@ Agent 编排器 -- 初始化所有Agent并连接到EventBus。
 3. 提供对外接口供API层调用
 """
 
-from datetime import datetime
+from datetime import UTC,datetime
 
 from app.core.event_bus import EventBus, Event, EventType
 from app.core.learner_model import LearnerModel
@@ -59,6 +59,7 @@ class AgentOrchestrator:
             learner_models=self.learner_models,
         )
 
+  
     #创建答题记录 -> 获取或加载学习者模型 -> 发布学生提交事件 -> 更新学习者状态并持久化 -> 返回事件历史
     async def submit_answer(
         self,
@@ -74,8 +75,8 @@ class AgentOrchestrator:
     ) -> list[Event]:
         """学生提交答案 -> 触发完整的Agent处理链。"""
        
-
-        await AnswerRecordDAO.create_answer_record(
+        now = datetime.now(UTC)
+        record = await AnswerRecordDAO.create_answer_record(
             db=db,
             user_id=int(learner_id),
             question_id=int(question_id),
@@ -83,10 +84,11 @@ class AgentOrchestrator:
             is_correct=is_correct,
             user_answer=user_answer,
             quality_q=quality_q,
-            started_at=started_at,
+            started_at=started_at or now,
             time_spent_seconds=time_spent_seconds,
         )
-        
+        print("[Orchestrator] answer_record created:", record.record_id)
+
         await self.get_or_load_learner_model(
             learner_id=learner_id,
             db=db,
@@ -97,12 +99,14 @@ class AgentOrchestrator:
             source="api",
             learner_id=learner_id,
             data={
+                "record_id": record.record_id,
                 "knowledge_id": knowledge_id,
                 "is_correct": is_correct,
                 "question_id": question_id,
                 "user_answer": user_answer,
                 "db": db,
-                "started_at": started_at,
+                "started_at": started_at or now,
+                "submitted_at": now,
                 "quality_q": quality_q,
                 "time_spent_seconds": time_spent_seconds,
             },

@@ -92,32 +92,152 @@ class LearningService:
 
     
 
-    async def get_next_question(self, db: AsyncSession, user_id: int,
-                                knowledge_id: int | None = None) -> dict | None:
-        query = select(Question).outerjoin(
-            AnswerRecord,
-            and_(AnswerRecord.question_id == Question.question_id, AnswerRecord.user_id == user_id),
-        ).where(AnswerRecord.record_id.is_(None))
+    async def get_next_question(
+        self,
+        db: AsyncSession,
+        user_id: int,
+        knowledge_id: int | None = None,
+    ) -> dict | None:
+        """
+        获取下一题。
+
+        规则：
+        1. 如果指定 knowledge_id，只允许返回该知识点下的题。
+        该知识点没有可练习题时，返回 no_question_for_knowledge，不再静默切到其他知识点。
+        2. 如果未指定 knowledge_id，才允许走全局推荐/随机兜底。
+        """
+
+        now = datetime.now(UTC)
+
+        # 指定知识点：严格限制在当前知识点内
         if knowledge_id is not None:
-            query = query.where(Question.knowledge_id == knowledge_id)
-        question = (await db.execute(query.order_by(Question.difficulty.asc(), func.random()).limit(1))).scalar_one_or_none()
-        reason = "new_question"
-        if not question:
-            due = (await db.execute(select(ReviewSchedule).where(
-                ReviewSchedule.user_id == user_id,
-                ReviewSchedule.next_review_at <= datetime.now(UTC),
-            ).order_by(ReviewSchedule.next_review_at.asc()).limit(1))).scalar_one_or_none()
+            # 1. 优先找该知识点下未做过的新题
+            query = (
+                select(Question)
+                .outerjoin(
+                    AnswerRecord,
+                    and_(
+                        AnswerRecord.question_id == Question.question_id,
+                        AnswerRecord.user_id == user_id,
+                    ),
+                )
+                .where(
+                    Question.knowledge_id == knowledge_id,
+                    AnswerRecord.record_id.is_(None),
+                )
+                .order_by(Question.difficulty.asc(), func.random())
+                .limit(1)
+            )
+
+            question = (await db.execute(query)).scalar_one_or_none()
+
+            if question:
+                data = question_to_dict(question, include_answer=False)
+                data["reason"] = "new_question"
+                data["requested_knowledge_id"] = knowledge_id
+                return data
+
+            # 2. 如果这个知识点有到期复习，则仍然只从这个知识点里抽题
+            due = (
+                await db.execute(
+                    select(ReviewSchedule)
+                    .where(
+                        ReviewSchedule.user_id == user_id,
+                        ReviewSchedule.knowledge_id == knowledge_id,
+                        ReviewSchedule.next_review_at <= now,
+                    )
+                    .order_by(ReviewSchedule.next_review_at.asc())
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
+
             if due:
-                question = (await db.execute(select(Question).where(Question.knowledge_id == due.knowledge_id).order_by(func.random()).limit(1))).scalar_one_or_none()
-                reason = "due_review"
+                question = (
+                    await db.execute(
+                        select(Question)
+                        .where(Question.knowledge_id == knowledge_id)
+                        .order_by(func.random())
+                        .limit(1)
+                    )
+                ).scalar_one_or_none()
+
+                if question:
+                    data = question_to_dict(question, include_answer=False)
+                    data["reason"] = "due_review"
+                    data["requested_knowledge_id"] = knowledge_id
+                    return data
+
+            # 3. 该知识点没有可用题，明确返回原因
+            return {
+                "question_id": None,
+                "knowledge_id": knowledge_id,
+                "requested_knowledge_id": knowledge_id,
+                "reason": "no_question_for_knowledge",
+                "message": "当前知识点暂无可练习题目，请选择其他知识点或联系教师添加题目。",
+            }
+
+        # 未指定知识点：全局找未做过的新题
+        query = (
+            select(Question)
+            .outerjoin(
+                AnswerRecord,
+                and_(
+                    AnswerRecord.question_id == Question.question_id,
+                    AnswerRecord.user_id == user_id,
+                ),
+            )
+            .where(AnswerRecord.record_id.is_(None))
+            .order_by(Question.difficulty.asc(), func.random())
+            .limit(1)
+        )
+
+        question = (await db.execute(query)).scalar_one_or_none()
+        reason = "new_question"
+
+        # 全局到期复习
         if not question:
-            question = (await db.execute(select(Question).order_by(func.random()).limit(1))).scalar_one_or_none()
+            due = (
+                await db.execute(
+                    select(ReviewSchedule)
+                    .where(
+                        ReviewSchedule.user_id == user_id,
+                        ReviewSchedule.next_review_at <= now,
+                    )
+                    .order_by(ReviewSchedule.next_review_at.asc())
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
+
+            if due:
+                question = (
+                    await db.execute(
+                        select(Question)
+                        .where(Question.knowledge_id == due.knowledge_id)
+                        .order_by(func.random())
+                        .limit(1)
+                    )
+                ).scalar_one_or_none()
+                reason = "due_review"
+
+        # 只有未指定 knowledge_id 时，才允许全局兜底
+        if not question:
+            question = (
+                await db.execute(
+                    select(Question)
+                    .order_by(func.random())
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
             reason = "fallback_random"
+
         if not question:
             return None
+
         data = question_to_dict(question, include_answer=False)
         data["reason"] = reason
+        data["requested_knowledge_id"] = None
         return data
+
 
     async def get_progress(self, db: AsyncSession, user_id: int) -> list[dict]:
         rows = (await db.execute(select(LearnerState, KnowledgePoint).join(KnowledgePoint, KnowledgePoint.knowledge_id == LearnerState.knowledge_id).where(LearnerState.user_id == user_id).order_by(LearnerState.mastery.desc()))).all()

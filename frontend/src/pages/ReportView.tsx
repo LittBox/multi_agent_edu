@@ -249,10 +249,16 @@ export default function ReportView({ userId }: ReportViewProps) {
         bottom: 28,
         left: 42,
       },
-      color: ["#33ddb9"],
       tooltip: {
         trigger: "axis",
         confine: true,
+        backgroundColor: "rgba(15, 23, 42, 0.92)",
+        borderColor: "rgba(61, 222, 190, 0.45)",
+        borderWidth: 1,
+        textStyle: {
+          color: "#ffffff",
+          fontSize: 12,
+        },
         valueFormatter: (value) => `${value}%`,
       },
       xAxis: {
@@ -289,16 +295,31 @@ export default function ReportView({ userId }: ReportViewProps) {
           name: "正确率",
           type: "bar",
           data: seriesData,
-          barWidth: 42,
+          barWidth: 28,
           itemStyle: {
-            color: "#33ddb9",
-            borderRadius: [4, 4, 0, 0],
+            borderRadius: [999, 999, 0, 0],
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: "rgba(61, 222, 190, 1)" },
+              { offset: 0.32, color: "rgba(61, 222, 190, 0.74)" },
+              { offset: 1, color: "rgba(61, 222, 190, 0.16)" },
+            ]),
+            shadowBlur: 8,
+            shadowColor: "rgba(61, 222, 190, 0.18)",
           },
-          label: {
-            show: false,
+          emphasis: {
+            itemStyle: {
+              borderRadius: [999, 999, 0, 0],
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: "rgba(61, 222, 190, 1)" },
+                { offset: 0.32, color: "rgba(61, 222, 190, 0.8)" },
+                { offset: 1, color: "rgba(61, 222, 190, 0.22)" },
+              ]),
+            },
           },
         },
       ],
+
+
     };
 
     chart.setOption(option, true);

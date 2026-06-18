@@ -1,203 +1,995 @@
-.practice-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(5, 25, 30, 0.65);
+.practice-page {
+  width: 100%;
+  height: 82vh;
+  max-height: 82vh;
+  padding: 0 1.4vw 1vh;
+  color: #eafbf7;
+  background: transparent;
+  overflow: hidden;
+}
+
+.practice-page * {
+  box-sizing: border-box;
+}
+
+.practice-page-header {
+  height: 6.5vh;
   display: grid;
-  place-items: center;
-  z-index: 1000;
-  padding: 24px;
-  backdrop-filter: blur(8px);
+  grid-template-columns: 10% minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: 1.2vw;
+  margin-bottom: 1.2vh;
 }
 
-.practice-modal {
-  width: min(640px, 100%);
-  max-height: 90vh;
+.practice-back {
+  width: 100%;
+  height: 5vh;
+  border: 0.08vw solid rgba(61, 222, 190, 0.38);
+  border-radius: 1.1vw;
+  color: #dffdf7;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(1.2vw);
+  -webkit-backdrop-filter: blur(1.2vw);
+  font-size: 0.9vw;
+}
+
+.practice-back:hover {
+  border-color: rgba(61, 222, 190, 0.72);
+  background: rgba(61, 222, 190, 0.12);
+}
+
+.practice-eyebrow {
+  margin: 0 0 0.4vh;
+  color: #3ddebe;
+  font-size: 0.75vw;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.practice-page-header h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 2vw;
+  line-height: 1.0;
+}
+
+.practice-header-meta {
+  display: flex;
+  gap: 0.7vw;
+  color: rgba(234, 251, 247, 0.72);
+  font-size: 0.85vw;
+  white-space: nowrap;
+}
+
+.practice-header-meta span {
+  padding: 0.8vh 0.8vw;
+  border: 0.08vw solid rgba(61, 222, 190, 0.24);
+  border-radius: 999em;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.practice-three-column {
+  height: calc(100% - 8.2vh);
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 24% minmax(0, 1fr) 22%;
+  gap: 1.4vw;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.practice-left-panel,
+.practice-right-panel {
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  gap: 1.2vh;
+  overflow: hidden;
+}
+
+/* 左列：上面顺序题目更高，下面复习排期稍低，但两张卡完整吃满 */
+.practice-left-panel {
+  grid-template-rows: 60% 40%;
+}
+
+/* 右列：掌握度看板更高，本轮情况更低，避免最后一行被裁掉 */
+.practice-right-panel {
+  grid-template-rows: 72% 28%;
+  overflow: hidden;
+  padding-right: 0;
+}
+
+.practice-right-panel::-webkit-scrollbar,
+.practice-square-grid::-webkit-scrollbar,
+.practice-table::-webkit-scrollbar,
+.practice-question-card::-webkit-scrollbar {
+  width: 0.35vw;
+}
+
+.practice-right-panel::-webkit-scrollbar-track,
+.practice-square-grid::-webkit-scrollbar-track,
+.practice-table::-webkit-scrollbar-track,
+.practice-question-card::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999em;
+}
+
+.practice-right-panel::-webkit-scrollbar-thumb,
+.practice-square-grid::-webkit-scrollbar-thumb,
+.practice-table::-webkit-scrollbar-thumb,
+.practice-question-card::-webkit-scrollbar-thumb {
+  background: rgba(61, 222, 190, 0.42);
+  border-radius: 999em;
+}
+
+.practice-right-panel::-webkit-scrollbar-thumb:hover,
+.practice-square-grid::-webkit-scrollbar-thumb:hover,
+.practice-table::-webkit-scrollbar-thumb:hover,
+.practice-question-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(61, 222, 190, 0.72);
+}
+
+.practice-card,
+.practice-question-card {
+  position: relative;
+  overflow: hidden;
+  border: 0.08vw solid rgba(61, 222, 190, 0.26);
+  border-radius: 1.6vw;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.04)),
+    rgba(8, 18, 32, 0.72);
+  box-shadow:
+    0 2vh 5vw rgba(0, 0, 0, 0.28),
+    inset 0 0.08vh 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(1.3vw);
+  -webkit-backdrop-filter: blur(1.3vw);
+}
+
+.practice-card {
+  padding: 1.3vw;
+}
+
+.practice-left-panel {
+  grid-template-rows: 58% 42%;
+}
+
+.practice-left-panel .practice-card:first-child,
+.practice-schedule-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.practice-question-card {
+  height: 100%;
+  min-height: 0;
+  padding: 2vw;
   overflow-y: auto;
-  background: var(--glass-white);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 28px;
-  box-shadow: 0 24px 60px var(--shadow-dark);
+  overflow-x: hidden;
 }
 
-.practice-header {
+.practice-card::before,
+.practice-question-card::before {
+  content: "";
+  position: absolute;
+  right: -5vw;
+  top: -5vw;
+  width: 12vw;
+  height: 12vw;
+  border-radius: 999em;
+  background: radial-gradient(circle, rgba(61, 222, 190, 0.28), transparent 68%);
+  pointer-events: none;
+}
+
+.practice-card-title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8vw;
+  margin-bottom: 1.2vh;
+  flex-shrink: 0;
+}
+
+.practice-card-title h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.05vw;
+}
+
+.practice-card-title span {
+  color: #3ddebe;
+  font-size: 0.78vw;
+  white-space: nowrap;
+}
+
+.practice-square-grid {
+  min-height: 0;
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.7vw;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: start;
+  padding-right: 0.25vw;
+  padding-bottom: 1vh;
+}
+
+.practice-question-square {
+  aspect-ratio: 1;
+  min-width: 0;
+  border: 0.08vw solid rgba(255, 255, 255, 0.12);
+  border-radius: 1vw;
+  color: rgba(234, 251, 247, 0.86);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 0.95vw;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.practice-question-square:hover {
+  border-color: rgba(61, 222, 190, 0.62);
+  transform: translateY(-0.15vh);
+}
+
+.practice-question-square.active {
+  color: #06251f;
+  border-color: transparent;
+  background: linear-gradient(135deg, #3ddebe, #8ff5df);
+  box-shadow: 0 1vh 2vw rgba(61, 222, 190, 0.28);
+}
+
+.practice-question-square.answered:not(.active) {
+  border-color: rgba(61, 222, 190, 0.28);
+  color: #3ddebe;
+  background: rgba(61, 222, 190, 0.08);
+}
+
+.practice-schedule-summary {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  gap: 0.8vw;
+  margin-bottom: 1vh;
+  padding: 1vh 0.9vw;
+  border-radius: 1vw;
+  background: rgba(61, 222, 190, 0.08);
+  flex-shrink: 0;
 }
 
-.practice-header h2 {
-  margin: 0;
-  color: var(--text-main);
+.practice-schedule-summary span {
+  color: rgba(234, 251, 247, 0.66);
+  font-size: 0.82vw;
 }
 
-.practice-close {
-  border: none;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 8px 14px;
+.practice-schedule-summary strong {
+  color: #3ddebe;
+  font-size: 0.82vw;
+}
+
+.practice-table {
+  min-height: 0;
+  flex: 1;
+  display: grid;
+  gap: 0.7vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: start;
+  padding-right: 0.25vw;
+  padding-bottom: 1.2vh;
+}
+
+.practice-table-head,
+.practice-table-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16% 22%;
+  gap: 0.7vw;
+  align-items: center;
+}
+
+.practice-table-head {
+  color: rgba(234, 251, 247, 0.52);
+  font-size: 0.75vw;
+  padding: 0 0.2vw;
+  flex-shrink: 0;
+}
+
+.practice-table-row {
+  width: 100%;
+  min-height: 4.6vh;
+  padding: 0.9vh 0.8vw;
+  border: 0.08vw solid rgba(255, 255, 255, 0.09);
+  border-radius: 0.9vw;
+  color: rgba(234, 251, 247, 0.84);
+  text-align: left;
   cursor: pointer;
-  color: var(--text-sub-light);
+  background: rgba(255, 255, 255, 0.055);
+  font-size: 0.82vw;
+}
+
+.practice-table-row span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.practice-table-row:hover {
+  border-color: rgba(61, 222, 190, 0.42);
+  background: rgba(61, 222, 190, 0.08);
+}
+
+.practice-table-row.active {
+  border-color: rgba(61, 222, 190, 0.62);
+  background: rgba(61, 222, 190, 0.12);
+}
+
+.practice-center-panel {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.practice-question-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1vw;
+  margin-bottom: 2vh;
+  color: rgba(234, 251, 247, 0.62);
+  font-size: 0.85vw;
 }
 
 .practice-stem {
-  font-size: 18px;
-  line-height: 1.6;
-  margin-bottom: 20px;
-  color: var(--text-main);
+  position: relative;
+  margin: 0 0 2.6vh;
+  color: #ffffff;
+  font-size: 1.8vw;
+  line-height: 1.55;
 }
 
 .practice-options {
   display: grid;
-  gap: 12px;
+  gap: 1.4vh;
 }
 
 .practice-option {
-  text-align: left;
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 14px 16px;
-  background: var(--glass-white);
-  backdrop-filter: blur(14px);
+  display: grid;
+  grid-template-columns: 8% minmax(0, 1fr);
+  gap: 1.2vw;
+  align-items: center;
+  width: 100%;
+  min-height: 8.2vh;
+  padding: 1.4vh 1.3vw;
+  border: 0.08vw solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.2vw;
+  color: rgba(234, 251, 247, 0.9);
   cursor: pointer;
-  color: var(--text-main);
-  transition: all 0.3s ease;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.065);
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.practice-option:hover {
+  border-color: rgba(61, 222, 190, 0.42);
+  background: rgba(61, 222, 190, 0.08);
+  transform: translateY(-0.15vh);
+}
+
+.practice-option span {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: 0.95vw;
+  color: #3ddebe;
+  font-weight: 800;
+  background: rgba(61, 222, 190, 0.12);
+  font-size: 0.95vw;
+}
+
+.practice-option p {
+  margin: 0;
+  line-height: 1.55;
+  font-size: 1vw;
 }
 
 .practice-option.selected {
-  border-color: rgba(98, 244, 213, 0.4);
-  background: rgba(98, 244, 213, 0.12);
-}
-
-.practice-actions {
-  margin-top: 24px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.practice-actions button {
-  border: none;
-  border-radius: 999px;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, var(--primary-green), #4ee7c7);
-  color: white;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.practice-actions button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.practice-feedback {
-  display: grid;
-  gap: 10px;
-}
-
-.practice-explanation,
-.practice-agent {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--text-main);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.practice-agent {
-  background: rgba(98, 244, 213, 0.08);
-  border-color: rgba(98, 244, 213, 0.2);
-  color: var(--mint-green);
-}
-
-.practice-success {
-  color: var(--mint-green);
-  font-weight: 600;
-  margin: 0;
-}
-
-.practice-fail {
-  color: var(--pink-cloud);
-  font-weight: 600;
-  margin: 0;
-}
-
-.practice-error,
-.practice-status {
-  color: var(--text-sub-light);
-}
-
-/* =========================================================
-   Latest practice modal update
-   适配新版 PracticePage 的反馈、下一题和选项状态。
-   ========================================================= */
-
-.practice-option:disabled {
-  opacity: 0.78;
-  cursor: not-allowed;
-}
-
-.practice-option:not(:disabled):hover {
-  border-color: rgba(98, 244, 213, 0.36);
-  background: rgba(98, 244, 213, 0.08);
+  border-color: rgba(61, 222, 190, 0.68);
+  background: rgba(61, 222, 190, 0.13);
 }
 
 .practice-option.correct {
-  border-color: rgba(98, 244, 213, 0.5);
-  background: rgba(98, 244, 213, 0.16);
+  border-color: rgba(61, 222, 190, 0.82);
+  background: rgba(61, 222, 190, 0.15);
 }
 
 .practice-option.wrong {
-  border-color: rgba(255, 143, 159, 0.5);
-  background: rgba(255, 143, 159, 0.12);
+  border-color: rgba(255, 105, 105, 0.72);
+  background: rgba(255, 105, 105, 0.1);
 }
 
 .practice-actions {
-  gap: 12px;
+  display: flex;
   flex-wrap: wrap;
+  gap: 0.9vw;
+  margin-top: 2.2vh;
 }
 
-.practice-actions button.secondary {
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid var(--glass-border);
-  color: var(--text-main);
+.practice-primary,
+.practice-secondary {
+  height: 5vh;
+  padding: 0 1.5vw;
+  border-radius: 1vw;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.95vw;
+}
+
+.practice-primary {
+  border: 0;
+  color: #06251f;
+  background: linear-gradient(135deg, #3ddebe, #8ff5df);
+  box-shadow: 0 1.2vh 2.4vw rgba(61, 222, 190, 0.26);
+}
+
+.practice-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+}
+
+.practice-secondary {
+  color: #dffdf7;
+  border: 0.08vw solid rgba(61, 222, 190, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.practice-secondary:hover {
+  border-color: rgba(61, 222, 190, 0.58);
+  background: rgba(61, 222, 190, 0.1);
 }
 
 .practice-feedback {
-  margin-top: 18px;
+  margin-top: 2vh;
+  padding: 1.3vw;
+  border: 0.08vw solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.2vw;
+  background: rgba(255, 255, 255, 0.07);
 }
 
-@media (max-width: 640px) {
-  .practice-overlay {
-    padding: 12px;
+.practice-feedback p {
+  margin: 1vh 0 0;
+  color: rgba(234, 251, 247, 0.78);
+  line-height: 1.7;
+  font-size: 0.95vw;
+}
+
+.practice-success {
+  color: #3ddebe;
+}
+
+.practice-fail {
+  color: #ff8585;
+}
+
+.practice-agent {
+  margin-top: 1.1vh;
+  padding: 1vh 1vw;
+  border-left: 0.22vw solid #3ddebe;
+  border-radius: 0.9vw;
+  color: rgba(234, 251, 247, 0.8);
+  background: rgba(61, 222, 190, 0.08);
+  white-space: pre-line;
+  font-size: 0.92vw;
+  line-height: 1.65;
+}
+
+.practice-mastery-ring {
+  --mastery-percent: 0%;
+
+  display: grid;
+  place-items: center;
+  width: 12vw;
+  max-width: 70%;
+  aspect-ratio: 1;
+  margin: 1.2vh auto 2vh;
+  border-radius: 999em;
+  background:
+    radial-gradient(circle, rgba(8, 18, 32, 0.96) 56%, transparent 58%),
+    conic-gradient(#3ddebe var(--mastery-percent), rgba(255, 255, 255, 0.08) 0);
+}
+
+.practice-mastery-ring div {
+  display: grid;
+  place-items: center;
+}
+
+.practice-mastery-ring strong {
+  color: #ffffff;
+  font-size: 2.2vw;
+}
+
+.practice-mastery-ring span {
+  color: rgba(234, 251, 247, 0.6);
+  font-size: 0.75vw;
+}
+
+.practice-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8vw;
+}
+
+.practice-stat-grid div {
+  min-width: 0;
+  padding: 1vh 1vw;
+  border-radius: 1vw;
+  background: rgba(255, 255, 255, 0.065);
+}
+
+.practice-stat-grid span {
+  display: block;
+  margin-bottom: 0.6vh;
+  color: rgba(234, 251, 247, 0.58);
+  font-size: 0.75vw;
+}
+
+.practice-stat-grid strong {
+  display: block;
+  overflow: hidden;
+  color: #ffffff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.05vw;
+}
+
+.practice-round-list {
+  display: grid;
+  gap: 0.8vh;
+}
+
+.practice-round-list p {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 1vh 1vw;
+  border-radius: 1vw;
+  color: rgba(234, 251, 247, 0.72);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.9vw;
+}
+
+.practice-round-list strong {
+  color: #3ddebe;
+}
+
+.practice-empty,
+.practice-status,
+.practice-error,
+.practice-empty-state {
+  position: relative;
+  color: rgba(234, 251, 247, 0.68);
+  line-height: 1.7;
+  font-size: 0.95vw;
+}
+
+.practice-error {
+  color: #ff8585;
+}
+
+.practice-empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 40vh;
+  text-align: center;
+}
+
+.practice-empty-state h2 {
+  margin: 0 0 1vh;
+  color: #ffffff;
+  font-size: 1.4vw;
+}
+
+.practice-empty-state p {
+  margin: 0;
+  color: rgba(234, 251, 247, 0.68);
+}
+
+.practice-mastery-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.practice-mastery-card .practice-card-title {
+  flex-shrink: 0;
+}
+
+.practice-mastery-card .practice-mastery-ring {
+  flex-shrink: 0;
+  width: 10.5vw;
+  max-width: 68%;
+  margin: 1vh auto 1.6vh;
+}
+
+.practice-mastery-card .practice-stat-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  gap: 0.8vw;
+  padding-bottom: 1.2vh;
+}
+
+.practice-right-panel .practice-card:last-child {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.practice-right-panel .practice-card:last-child .practice-round-list {
+  flex: 1;
+  align-content: start;
+}
+
+@media (max-width: 78em) {
+  .practice-page {
+    height: 78vh;
+    max-height: 78vh;
+    padding: 0 1.2vw 1.2vh;
   }
 
-  .practice-modal {
-    padding: 20px;
-    border-radius: 18px;
+  .practice-page-header {
+    grid-template-columns: 12% minmax(0, 1fr);
+    height: auto;
   }
 
-  .practice-header {
-    gap: 12px;
-    align-items: flex-start;
+  .practice-header-meta {
+    grid-column: 1 / -1;
   }
 
+  .practice-three-column {
+    height: calc(100% - 11vh);
+    grid-template-columns: 30% minmax(0, 1fr);
+  }
+
+  .practice-right-panel {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    height: 28vh;
+    max-height: 28vh;
+  }
+
+  .practice-mastery-ring {
+    width: 10vw;
+  }
+}
+
+@media (max-width: 58em) {
+  .practice-page {
+    height: auto;
+    max-height: none;
+    padding: 1.4vh 1.6vw;
+    overflow: visible;
+  }
+
+  .practice-page-header {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-back {
+    width: 34%;
+  }
+
+  .practice-header-meta {
+    flex-wrap: wrap;
+  }
+
+  .practice-three-column {
+    height: auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .practice-left-panel,
+  .practice-right-panel {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .practice-left-panel .practice-card:first-child,
+  .practice-schedule-card {
+    height: auto;
+    max-height: none;
+  }
+
+  .practice-square-grid {
+    max-height: 32vh;
+  }
+
+  .practice-question-card {
+    height: auto;
+    max-height: none;
+  }
+
+  .practice-right-panel {
+    grid-template-columns: 1fr;
+    padding-right: 0;
+  }
+
+  .practice-mastery-ring {
+    width: 24vw;
+  }
+
+  .practice-card-title h2,
+  .practice-stat-grid strong,
+  .practice-option p,
+  .practice-primary,
+  .practice-secondary,
+  .practice-empty,
+  .practice-status,
+  .practice-error {
+    font-size: 2.2vw;
+  }
+
+  .practice-page-header h1,
   .practice-stem {
-    font-size: 16px;
+    font-size: 4vw;
   }
 
-  .practice-actions {
-    justify-content: stretch;
+  .practice-eyebrow,
+  .practice-card-title span,
+  .practice-table-head,
+  .practice-stat-grid span {
+    font-size: 1.7vw;
+  }
+}
+
+@media (max-width: 36em) {
+  .practice-back {
+    width: 44%;
   }
 
-  .practice-actions button {
-    flex: 1 1 100%;
+  .practice-square-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .practice-option {
+    grid-template-columns: 12% minmax(0, 1fr);
+  }
+
+  .practice-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   Final layout fix:
+   让练习页完整吃满知识仓库剩余空间，修复底部露空 / 卡片缺角问题
+   ========================================================= */
+
+.practice-page {
+  width: 100%;
+  height: calc(100dvh - 12vh);
+  max-height: calc(100dvh - 12vh);
+  min-height: 0;
+  padding: 0 1.4vw 1vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: transparent;
+}
+
+.practice-page-header {
+  flex: 0 0 7vh;
+  height: 7vh;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 10% minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: 1.2vw;
+  margin-bottom: 1vh;
+}
+
+.practice-three-column {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 24% minmax(0, 1fr) 22%;
+  gap: 1.4vw;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.practice-left-panel {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 0.58fr) minmax(0, 0.42fr);
+  gap: 1.2vh;
+  overflow: hidden;
+}
+
+.practice-right-panel {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 0.68fr) minmax(0, 0.32fr);
+  gap: 1.2vh;
+  overflow: hidden;
+  padding-right: 0;
+}
+
+.practice-center-panel {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.practice-card,
+.practice-question-card {
+  min-height: 0;
+}
+
+.practice-left-panel .practice-card:first-child,
+.practice-schedule-card,
+.practice-mastery-card,
+.practice-right-panel .practice-card:last-child {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.practice-question-card {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.practice-card-title,
+.practice-schedule-summary,
+.practice-mastery-ring {
+  flex-shrink: 0;
+}
+
+.practice-square-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: start;
+}
+
+.practice-table {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: start;
+  padding-bottom: 1vh;
+}
+
+.practice-mastery-card .practice-stat-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-content: stretch;
+  padding-bottom: 0.8vh;
+}
+
+.practice-right-panel .practice-card:last-child .practice-round-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-content: stretch;
+}
+
+.practice-round-list p,
+.practice-stat-grid div {
+  min-height: 0;
+}
+
+/* 中等屏幕：右侧下移，但仍然不撑爆 */
+@media (max-width: 78em) {
+  .practice-page {
+    height: auto;
+    max-height: none;
+    min-height: calc(100dvh - 12vh);
+    overflow: visible;
+  }
+
+  .practice-page-header {
+    height: auto;
+    flex-basis: auto;
+    grid-template-columns: 12% minmax(0, 1fr);
+  }
+
+  .practice-header-meta {
+    grid-column: 1 / -1;
+  }
+
+  .practice-three-column {
+    height: auto;
+    min-height: 0;
+    grid-template-columns: 30% minmax(0, 1fr);
+    overflow: visible;
+  }
+
+  .practice-left-panel {
+    height: calc(100dvh - 24vh);
+  }
+
+  .practice-center-panel {
+    height: calc(100dvh - 24vh);
+  }
+
+  .practice-right-panel {
+    grid-column: 1 / -1;
+    height: 34vh;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+/* 小屏：单列，不强行锁高度 */
+@media (max-width: 58em) {
+  .practice-page {
+    height: auto;
+    max-height: none;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .practice-page-header {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-three-column {
+    display: grid;
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
+
+  .practice-left-panel,
+  .practice-center-panel,
+  .practice-right-panel {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .practice-left-panel {
+    grid-template-rows: auto auto;
+  }
+
+  .practice-right-panel {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .practice-square-grid {
+    max-height: 36vh;
+  }
+
+  .practice-table {
+    max-height: 32vh;
   }
 }

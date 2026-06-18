@@ -1,19 +1,21 @@
 import request from "./request";
 
 export interface Question {
-  question_id: number;
+  question_id: number | null;
   knowledge_id: number | null;
-  question_type: string;
-  stem: string;
-  option_a: string | null;
-  option_b: string | null;
-  option_c: string | null;
-  option_d: string | null;
+  question_type?: string;
+  stem?: string;
+  option_a?: string | null;
+  option_b?: string | null;
+  option_c?: string | null;
+  option_d?: string | null;
   answer?: string;
-  difficulty: number;
-  image_url: string | null;
+  difficulty?: number;
+  image_url?: string | null;
   explanation?: string | null;
   reason?: string;
+  message?: string;
+  requested_knowledge_id?: number | null;
 }
 
 export interface QuestionCreateParams {

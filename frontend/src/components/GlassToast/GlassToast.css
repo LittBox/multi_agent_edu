@@ -1,0 +1,117 @@
+.glass-toast-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(6, 12, 24, 0.28);
+  backdrop-filter: blur(8px);
+}
+
+.glass-toast {
+  position: relative;
+  width: min(420px, 100%);
+  overflow: hidden;
+  padding: 22px 22px 18px;
+  border-radius: 22px;
+  color: #ffffff;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06)),
+    rgba(12, 24, 38, 0.72);
+  border: 1px solid rgba(61, 222, 190, 0.38);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  animation: glassToastIn 180ms ease-out;
+}
+
+.glass-toast-glow {
+  position: absolute;
+  right: -70px;
+  top: -70px;
+  width: 170px;
+  height: 170px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(61, 222, 190, 0.42), transparent 68%);
+  pointer-events: none;
+}
+
+.glass-toast-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.glass-toast-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: #3ddebe;
+  box-shadow: 0 0 18px rgba(61, 222, 190, 0.9);
+}
+
+.glass-toast h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.glass-toast p {
+  position: relative;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.glass-toast button {
+  position: relative;
+  margin-top: 18px;
+  width: 100%;
+  height: 42px;
+  border: 0;
+  border-radius: 14px;
+  color: #06251f;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, #3ddebe, #8ff5df);
+  box-shadow: 0 10px 30px rgba(61, 222, 190, 0.28);
+}
+
+.glass-toast button:hover {
+  filter: brightness(1.04);
+}
+
+.glass-toast-error {
+  border-color: rgba(255, 105, 105, 0.45);
+}
+
+.glass-toast-error .glass-toast-dot {
+  background: #ff6969;
+  box-shadow: 0 0 18px rgba(255, 105, 105, 0.75);
+}
+
+.glass-toast-warning {
+  border-color: rgba(255, 203, 107, 0.45);
+}
+
+.glass-toast-warning .glass-toast-dot {
+  background: #ffcb6b;
+  box-shadow: 0 0 18px rgba(255, 203, 107, 0.75);
+}
+
+@keyframes glassToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

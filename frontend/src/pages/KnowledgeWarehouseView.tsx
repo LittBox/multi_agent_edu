@@ -39,6 +39,16 @@ export default function KnowledgeWarehouseView({ userId }: KnowledgeWarehouseVie
     setPracticeOpen(true);
   };
 
+  if (practiceOpen) {
+    return (
+      <PracticePage
+        userId={userId}
+        knowledgeId={practiceKnowledgeId}
+        onClose={() => setPracticeOpen(false)}
+      />
+    );
+  }
+  
   return (
     <div className="warehouse-view">
       <header className="warehouse-header">
@@ -93,8 +103,6 @@ export default function KnowledgeWarehouseView({ userId }: KnowledgeWarehouseVie
           </section>
         ))}
       </div>
-
-      {practiceOpen && <PracticePage userId={userId} knowledgeId={practiceKnowledgeId} onClose={() => setPracticeOpen(false)} />}
     </div>
   );
 }

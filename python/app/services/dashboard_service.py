@@ -7,22 +7,49 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.answer_record import AnswerRecord
 from app.db.models.knowledge_point import KnowledgePoint
 from app.db.models.learner_state import LearnerState
+from app.core.learner_model import KnowledgeState, MasteryLevel
 
-MASTERY_MASTERED = 0.6
-DEFAULT_MINUTES_PER_ANSWER = 3
+def _safe_float(value, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_int(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 
 class DashboardService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
+    @staticmethod
+    def _is_mastered(state: LearnerState) -> bool:
+        return (
+            KnowledgeState(
+                knowledge_id=str(state.knowledge_id),
+                mastery=_safe_float(state.mastery),
+                attempts=_safe_int(state.attempts),
+                correct_count=_safe_int(state.correct_attempts),
+                streak=_safe_int(state.streak),
+                last_attempt=state.last_practiced_at,
+            ).level
+            == MasteryLevel.MASTERED
+        )
+    
     async def get_dashboard_summary(self, user_id: int) -> dict:
         records = (await self.db.execute(select(AnswerRecord).where(AnswerRecord.user_id == user_id))).scalars().all()
         today = date.today()
         daily_minutes: dict[date, float] = {}
         for record in records:
             day = record.submitted_at.date()
-            daily_minutes[day] = daily_minutes.get(day, 0.0) + ((record.time_spent_seconds or DEFAULT_MINUTES_PER_ANSWER * 60) / 60)
+            seconds = float(record.time_spent_seconds or 0)
+            if seconds > 0:
+                daily_minutes[day] = daily_minutes.get(day, 0.0) + seconds / 60
         trend = [{"date": (today - timedelta(days=offset)).isoformat(), "minutes": round(daily_minutes.get(today - timedelta(days=offset), 0), 1)} for offset in range(6, -1, -1)]
         week_values = [daily_minutes.get(today - timedelta(days=i), 0) for i in range(7)]
         active_days = sorted({r.submitted_at.date() for r in records}, reverse=True)
@@ -51,7 +78,7 @@ class DashboardService:
             "mastery_percent": int(round(state.mastery * 100)),
             "attempts": state.attempts,
             "streak": state.streak,
-            "status": "mastered" if state.mastery >= MASTERY_MASTERED else "learning",
+            "status": "mastered" if self._is_mastered(state) else "learning"
         } for state, kp in rows]
 
     async def get_learning_path(self, user_id: int) -> list[dict]:
@@ -62,6 +89,13 @@ class DashboardService:
             state = states.get(kp.knowledge_id)
             mastery = state.mastery if state else 0.0
             attempts = state.attempts if state else 0
-            status = "done" if mastery >= MASTERY_MASTERED else "learning" if attempts > 0 else "locked" if kp.parent_id else "available"
+            if state and self._is_mastered(state):
+                status = "done"
+            elif attempts > 0:
+                status = "learning"
+            elif kp.parent_id:
+                status = "locked"
+            else:
+                status = "available"
             path.append({"knowledge_id": kp.knowledge_id, "name": kp.name, "subject": kp.subject, "status": status, "mastery": round(mastery, 2)})
         return path
