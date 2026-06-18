@@ -10,10 +10,9 @@ import DashboardLayout, { type DashboardView, type UserRole } from "./components
 import CourseManagementView from "./pages/CourseManagementView";
 import StudentCourseView from "./pages/StudentCourseView";
 import KnowledgeWarehouseView from "./pages/KnowledgeWarehouseView";
-import ProfileView from "./pages/ProfileView";
-import SettingsView from "./pages/SettingsView";
 import PracticePage from "./pages/PracticePage";
 import TaskView from "./pages/TaskView";
+
 
 import { useAuthStore } from "./stores/AuthStore";
 import GhostMouse from "./components/GhostMouse/GhostMouse";
@@ -112,8 +111,6 @@ function App() {
         <Route path="/courses" element={<Navigate to={user.role === "teacher" ? "/teacher/courses" : user.role === "student" ? "/student/courses" : "/dashboard"} replace />} />
         <Route path="/knowledge" element={renderWithLayout("warehouse", ["teacher", "student"], <KnowledgeWarehouseView userId={currentUserId} />)} />
         <Route path="/tasks" element={renderWithLayout("tasks", ["teacher", "student"], <TaskView role={user.role} />)} />
-        <Route path="/profile" element={renderWithLayout("profile", ["teacher", "student"], <ProfileView userId={currentUserId} />)} />
-        <Route path="/settings" element={renderWithLayout("settings", ["admin", "teacher", "student"], <SettingsView />)} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </>

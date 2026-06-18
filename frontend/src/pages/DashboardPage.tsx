@@ -17,11 +17,10 @@ import CourseManagementView from "./CourseManagementView";
 import StudentCourseView from "./StudentCourseView";
 import ExamView from "./ExamView";
 import TaskView from "./TaskView";
-import ProfileView from "./ProfileView";
-import ReportView from "./ReportView";
-import SettingsView from "./SettingsView";
+
 import AdminView from "./AdminView";
 import "../styles/pages/DashboardPage.css";
+import PersonalCenterView from "./PersonalCenterView";
 
 type PageKey =
   | "home"
@@ -30,8 +29,6 @@ type PageKey =
   | "exams"
   | "tasks"
   | "profile"
-  | "report"
-  | "settings"
   | "admin";
 
 type TrendItem = {
@@ -56,9 +53,7 @@ const pageTitle: Record<PageKey, string> = {
   courses: "课程选课",
   exams: "考试中心",
   tasks: "作业中心",
-  profile: "个人主页",
-  report: "学习报告",
-  settings: "系统设置",
+  profile: "个人中心",
   admin: "后台管理",
 };
 
@@ -510,9 +505,8 @@ export default function DashboardPage() {
       },
       { key: "exams" as PageKey, label: "考试", icon: FileText },
       { key: "tasks" as PageKey, label: "作业", icon: ClipboardList },
-      { key: "report" as PageKey, label: "报告", icon: CalendarDays },
       { key: "profile" as PageKey, label: "我的", icon: UserRound },
-      { key: "settings" as PageKey, label: "设置", icon: Settings },
+
     ];
 
     return role === "admin"
@@ -544,15 +538,7 @@ export default function DashboardPage() {
     }
 
     if (active === "profile") {
-      return <ProfileView userId={userId} />;
-    }
-
-    if (active === "report") {
-      return <ReportView userId={userId} />;
-    }
-
-    if (active === "settings") {
-      return <SettingsView />;
+      return <PersonalCenterView />;
     }
 
     if (active === "admin") {

@@ -55,7 +55,13 @@ function clampPercent(value?: number | null) {
   return Math.max(0, Math.min(100, Math.round(num)));
 }
 
-function isRealQuestion(question: Question | null | undefined): question is Question {
+type RealQuestion = Question & {
+  question_id: number;
+};
+
+function isRealQuestion(
+  question: Question | null | undefined
+): question is RealQuestion {
   return Boolean(question && question.question_id != null);
 }
 
