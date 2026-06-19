@@ -350,7 +350,7 @@
   position: relative;
   margin: 0 0 2.6vh;
   color: #ffffff;
-  font-size: 1.8vw;
+  font-size: 1.2vw;
   line-height: 1.55;
 }
 
@@ -904,6 +904,56 @@
 .practice-round-list p,
 .practice-stat-grid div {
   min-height: 0;
+}
+
+.practice-analysis-markdown {
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.practice-analysis-markdown h1,
+.practice-analysis-markdown h2,
+.practice-analysis-markdown h3 {
+  margin: 14px 0 8px;
+  font-weight: 700;
+}
+
+.practice-analysis-markdown h1 {
+  font-size: 20px;
+}
+
+.practice-analysis-markdown h2 {
+  font-size: 18px;
+}
+
+.practice-analysis-markdown h3 {
+  font-size: 16px;
+}
+
+.practice-analysis-markdown p {
+  margin: 8px 0;
+}
+
+.practice-analysis-markdown ul,
+.practice-analysis-markdown ol {
+  margin: 8px 0 8px 20px;
+  padding-left: 16px;
+}
+
+.practice-analysis-markdown li {
+  margin: 6px 0;
+}
+
+.practice-analysis-markdown strong {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.practice-analysis-markdown code {
+  padding: 2px 5px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.92em;
 }
 
 /* 中等屏幕：右侧下移，但仍然不撑爆 */

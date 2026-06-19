@@ -109,7 +109,7 @@ class HintAgent(BaseAgent):
         key = f"{learner_id}:{knowledge_id}"
         self._hint_history[key] = self._hint_history.get(key, 0) + 1
 
-        hint_text = self._generate_hint(knowledge_id, level)
+        hint_text = self._generate_hint(event, level)
 
         level_names = {
             HintLevel.METACOGNITIVE: "metacognitive",

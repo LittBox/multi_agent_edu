@@ -32,6 +32,7 @@ from app.routers.tasks import router as tasks_router
 from app.routers.exams import router as exams_router
 from app.routers.admin import router as admin_router
 from app.routers.role import router as role_router
+from app.routers.tutor import router as tutor_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -53,7 +54,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="多Agent智能教育系统",
+    title="EduLoop",
     description=(
         "5-Agent Mesh+事件驱动架构的个性化学习系统。\n\n"
         "**Agent列表：**\n"
@@ -88,11 +89,11 @@ app.include_router(dashboard_router, prefix="/api")
 app.include_router(knowledge_router, prefix="/api")
 app.include_router(user_router, prefix="/api")
 app.include_router(tasks_router, prefix="/api")
-app.include_router(tasks_router, prefix="/api/v1")
 app.include_router(exams_router, prefix="/api")
 app.include_router(admin_router, prefix="/api")
 app.include_router(health_router, prefix="/api")
 app.include_router(role_router, prefix="/api")
+app.include_router(tutor_router, prefix="/api")
 app.include_router(ws_router)
 
 @app.exception_handler(HTTPException)

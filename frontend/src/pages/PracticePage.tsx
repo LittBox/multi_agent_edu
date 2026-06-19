@@ -4,7 +4,8 @@ import { useEducationStore } from "../stores";
 import GlassToast from "../components/GlassToast/GlassToast";
 import type { Question, SubmitAnswerResult } from "../api/education";
 import "../styles/pages/PracticePage.css";
-
+import { generateAnswerAnalysis } from "../api/tutor";
+import ReactMarkdown from "react-markdown";
 interface PracticePageProps {
   userId: number;
   knowledgeId?: number;
@@ -99,7 +100,9 @@ export default function PracticePage({
   const [answeredQuestionIds, setAnsweredQuestionIds] = useState<Set<number>>(
     () => new Set(),
   );
-
+  const [answerAnalysis, setAnswerAnalysis] = useState("");
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState("");
   const [lastResult, setLastResult] = useState<SubmitAnswerResult | null>(null);
   const [resultQuestionId, setResultQuestionId] = useState<number | null>(null);
   const [toast, setToast] = useState<ToastState>(emptyToast);
@@ -196,6 +199,9 @@ export default function PracticePage({
     setStartedAt(Date.now());
     setLastResult(null);
     setResultQuestionId(null);
+    setAnswerAnalysis("");
+    setAnalysisLoading(false);
+    setAnalysisError("");
   };
 
   const selectQuestion = async (questionId: number) => {
@@ -261,6 +267,10 @@ export default function PracticePage({
 
     const questionId = currentQuestion.question_id;
 
+    setAnswerAnalysis("");
+    setAnalysisError("");
+    setAnalysisLoading(true);
+
     const result = await submitAnswer({
       user_id: userId,
       question_id: questionId,
@@ -283,6 +293,32 @@ export default function PracticePage({
       next.add(questionId);
       return next;
     });
+
+    const selectedOptionText =
+      options.find(([key]) => key === selected)?.[1] ?? selected;
+
+    const correctOptionText =
+      options.find(([key]) => key === result.correct_answer)?.[1] ??
+      result.correct_answer ??
+      "";
+
+    try {
+      const analysisResult = await generateAnswerAnalysis({
+        learner_id: String(userId),
+        knowledge_id: String(currentQuestion.knowledge_id ?? knowledgeId ?? "general"),
+        question: currentQuestion.stem || "题干为空",
+        user_answer: selectedOptionText,
+        correct_answer: correctOptionText,
+        is_correct: result.is_correct,
+      });
+
+      setAnswerAnalysis(analysisResult.analysis);
+    } catch (error) {
+      console.error(error);
+      setAnalysisError("AI 解析生成失败，已保留基础解析。");
+    } finally {
+      setAnalysisLoading(false);
+    }
 
     await Promise.allSettled([
       loadQuestions(userId, knowledgeId),
@@ -558,13 +594,26 @@ export default function PracticePage({
                         : `回答错误，正确答案：${lastResult.correct_answer}`}
                     </strong>
 
-                    <p>{lastResult.explanation || "暂无解析"}</p>
+                        {analysisLoading && (
+                          <p className="practice-status">Tutor Agent 正在生成解析…</p>
+                        )}
 
-                    {lastResult.agent_reply && (
-                      <div className="practice-agent">
-                        {lastResult.agent_reply}
+                        {analysisError && (
+                          <p className="practice-error">{analysisError}</p>
+                        )}
+
+                      <div className="practice-analysis-markdown">
+                        <ReactMarkdown>
+                          {answerAnalysis || lastResult.explanation || "暂无解析"}
+                        </ReactMarkdown>
                       </div>
-                    )}
+
+                        {lastResult.agent_reply && (
+                          <div className="practice-agent">
+                            {lastResult.agent_reply}
+                          </div>
+                        )}
+
                   </div>
                 )}
               </>

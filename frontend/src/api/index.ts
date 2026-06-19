@@ -7,4 +7,3 @@ export * from "./education";
 export * from "./exams";
 export * from "./knowledge";
 export * from "./tasks";
-export * from "./user";
