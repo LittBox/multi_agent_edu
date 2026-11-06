@@ -6,6 +6,52 @@ Edu Loop 是一个面向学生端学习练习场景的智能教育系统 Demo。
 
 当前项目已经完成学生端前后端基础联调，前端通过 HTTP 请求调用后端接口。WebSocket / 全双工通信能力后续再完善；教师端和管理员端完整界面暂不作为当前阶段重点。
 
+### 界面一览
+
+从课程与知识探索，到练习、考试和个人学习数据，以下动图展示了 Edu Loop 的主要学生端页面。点击或打开 GIF 可查看完整演示。
+
+<details open>
+<summary><strong>学习与课程</strong></summary>
+
+<table>
+<tr>
+<td align="center"><strong>课程选择</strong><br><img src="assets/gifs/course-selection.gif" alt="课程选择界面" width="420"></td>
+<td align="center"><strong>知识仓库</strong><br><img src="assets/gifs/knowledge-library.gif" alt="知识仓库界面" width="420"></td>
+</tr>
+<tr>
+<td align="center"><strong>知识检索</strong><br><img src="assets/gifs/knowledge-base.gif" alt="知识检索界面" width="420"></td>
+<td align="center"><strong>练习</strong><br><img src="assets/gifs/practice.gif" alt="练习界面" width="420"></td>
+</tr>
+<tr>
+<td align="center"><strong>作业中心</strong><br><img src="assets/gifs/assignments.gif" alt="作业中心界面" width="420"></td>
+<td align="center"><strong>考试</strong><br><img src="assets/gifs/exams.gif" alt="考试界面" width="420"></td>
+</tr>
+</table>
+
+</details>
+
+<details>
+<summary><strong>个人中心与平台入口</strong></summary>
+
+<table>
+<tr>
+<td align="center"><strong>登录</strong><br><img src="assets/gifs/sign-in.gif" alt="登录界面" width="420"></td>
+<td align="center"><strong>首页宣传</strong><br><img src="assets/gifs/education-campaign.gif" alt="首页宣传轮播" width="420"></td>
+</tr>
+<tr>
+<td align="center"><strong>个人中心</strong><br><img src="assets/gifs/personal-center.gif" alt="个人中心界面" width="420"></td>
+<td align="center"><strong>学习画像</strong><br><img src="assets/gifs/learning-analytics.gif" alt="学习画像界面" width="420"></td>
+</tr>
+<tr>
+<td align="center"><strong>修改资料</strong><br><img src="assets/gifs/profile-edit.gif" alt="修改资料界面" width="420"></td>
+<td align="center"><strong>登录页轮播</strong><br><img src="assets/gifs/landing-carousel.gif" alt="登录页轮播界面" width="420"></td>
+</tr>
+</table>
+
+</details>
+
+> 界面动图文件位于 `assets/gifs/`，README 通过相对路径引用。
+
 当前主要链路如下：
 
 ```text
